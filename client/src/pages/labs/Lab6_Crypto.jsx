@@ -72,8 +72,9 @@ export default function Lab6_Crypto() {
         fetchDashboard();
 
         // Dynamically inject the config.js script so it appears in the Network tab
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
         const script = document.createElement('script');
-        script.src = '/api/labs/lab6-crypto/config.js';
+        script.src = `${API_URL}/api/labs/lab6-crypto/config.js`;
         script.async = true;
         document.head.appendChild(script);
 

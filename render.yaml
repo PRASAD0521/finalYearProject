@@ -22,7 +22,6 @@ services:
     rootDir: client
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
-    plan: free
     envVars:
       # Connect the frontend to the deployed backend.
       - key: VITE_API_URL

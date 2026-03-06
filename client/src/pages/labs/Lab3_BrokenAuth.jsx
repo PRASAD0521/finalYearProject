@@ -26,10 +26,12 @@ export default function Lab3_BrokenAuth() {
         e.preventDefault();
         setFeedback(null);
         try {
-            await axios.post('http://localhost:4000/api/auth/otp-generate', { username });
-            setStep('OTP');
+            // Modular route
+            await axios.post('http://localhost:4000/api/labs/lab3-brokenauth/otp-generate', { username: 'admin' });
+            setStep('OTP'); // Changed from 'otp' to 'OTP' to match existing state values
             setFeedback({ type: 'info', message: `OTP sent to ${username}***@example.com` });
         } catch (err) {
+            console.error(err);
             setFeedback({ type: 'error', message: 'User not found' });
         }
     };
@@ -40,7 +42,11 @@ export default function Lab3_BrokenAuth() {
 
         try {
             // 1. Make the real request
-            const response = await axios.post('http://localhost:4000/api/auth/otp-verify', { username, otp });
+            // Modular route
+            const response = await axios.post('http://localhost:4000/api/labs/lab3-brokenauth/otp-verify', {
+                username: 'admin',
+                otp
+            });
 
             let data = response.data;
 
@@ -84,7 +90,12 @@ export default function Lab3_BrokenAuth() {
     const handleResetPassword = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('http://localhost:4000/api/reset-password', { username, newPassword });
+            // Modular route
+            const res = await axios.post('http://localhost:4000/api/labs/lab3-brokenauth/reset-password', {
+                username: 'admin',
+                newPassword: newPassword
+            });
+
             if (res.data.success) {
                 if (username === 'admin') markLabComplete(3);
                 setFeedback({ type: 'success', message: 'Password Reset Successfully! You have hijacked the account.' });

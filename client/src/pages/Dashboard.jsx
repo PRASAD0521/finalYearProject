@@ -16,8 +16,10 @@ export default function Dashboard() {
     const allLabs = [
         { id: 1, title: 'Lab 01: SQL Injection', desc: 'Bypass authentication using SQL manipulation.', path: '/simulation/lab-01' },
         { id: 2, title: 'Lab 02: Reflected XSS', desc: 'Inject malicious scripts into trusted web pages.', path: '/simulation/lab-02' },
-        { id: 3, title: 'Lab 03: Broken Authentication', desc: 'Exploit weak session management to hijack accounts.', path: '/simulation/lab-03' },
-        { id: 4, title: 'Lab 04: Security Misconfiguration', desc: 'Find hidden debug endpoints on production servers.', path: '/simulation/lab-04' }
+        { id: 3, title: 'Lab 03: Broken Authentication', desc: 'Bypass 2-Factor Authentication by intercepting and modifying server responses.', path: '/simulation/lab-03' },
+        { id: 4, title: 'Lab 04: Security Misconfiguration', desc: 'Find hidden debug endpoints on production servers.', path: '/simulation/lab-04' },
+        { id: 5, title: 'Lab 05: Broken Access Control (IDOR)', desc: 'Access other users\' private documents by manipulating IDs.', path: '/simulation/lab-05' },
+        { id: 6, title: 'Lab 06: Cryptographic Failures', desc: 'Crack weak password hashes and exploit exposed secrets to gain admin access.', path: '/simulation/lab-06' }
     ];
 
     return (

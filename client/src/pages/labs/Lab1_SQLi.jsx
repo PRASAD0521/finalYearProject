@@ -18,7 +18,11 @@ export default function Lab1_SQLi() {
         try {
             // Intentionally hitting the vulnerable endpoint
             // In a real isolated environment, this might be a separate API
-            const res = await axios.post('http://localhost:4000/api/login', { username, password });
+            // Updated to modular route
+            const res = await axios.post('http://localhost:4000/api/labs/lab1-sqli/login', {
+                username,
+                password
+            });
 
             if (res.data.success) {
                 markLabComplete(1); // Mark Lab 1 as complete

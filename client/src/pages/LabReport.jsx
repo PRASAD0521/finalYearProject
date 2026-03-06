@@ -104,6 +104,75 @@ export default function LabReport() {
                     </div>
                 </div>
             )
+        },
+        5: {
+            title: "Broken Access Control (IDOR)",
+            severity: "Critical",
+            whatHappened: "You exploited an 'Inconsistent Authorization' vulnerability to steal highly confidential corporate data.",
+            explanation: "The 'Front Door' (the main document viewer) was properly secured. However, developers forgot to secure the 'Backdoor' (the data export API). By changing the user ID to the CEO's ID in the export request, the server blindly packed up their private data—including the $500M TechNova acquisition plans—and handed it to you.",
+            technical: (
+                <div className="space-y-4">
+                    <div className="bg-red-50 p-4 border border-red-200 rounded text-red-900 text-sm shadow-sm">
+                        <strong className="flex items-center gap-2 mb-3 text-red-800 text-base">
+                            <AlertTriangle className="w-5 h-5" /> Real World Business Impact
+                        </strong>
+                        <ul className="list-disc pl-5 space-y-2">
+                            <li><strong>Insider Trading:</strong> Malicious actors could buy or short TechNova stock before the public announcement, committing severe financial crimes.</li>
+                            <li><strong>Deal Collapse:</strong> A $500M M&A (Mergers & Acquisitions) deal could fall through entirely if confidentiality is breached early.</li>
+                            <li><strong>Regulatory Fines:</strong> Severe regulatory penalties from entities like the SEC (Securities and Exchange Commission).</li>
+                            <li><strong>Reputation Destruction:</strong> Complete loss of shareholder and board trust in the security posture of the company.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p className="text-green-600 font-mono text-sm mb-1 mt-4">// Secure Code (The Fix)</p>
+                        <div className="bg-green-50 p-3 rounded border border-green-200 font-mono text-sm">
+                            app.get('/api/export', (req, res) =&gt; &#123; <br />
+                            &nbsp;&nbsp;// ALWAYS verify authorization consistently<br />
+                            &nbsp;&nbsp;if (parseInt(req.query.user_id) !== current_user_id) return 403;<br />
+                            &#125;)
+                        </div>
+                    </div>
+                </div>
+            )
+        },
+        6: {
+            title: "Cryptographic Failures",
+            severity: "Critical",
+            whatHappened: "You cracked the administrator's password by exploiting three cryptographic mistakes: an exposed database backup containing password hashes, a hardcoded salt leaked in client-side JavaScript, and the use of MD5 — a broken hashing algorithm.",
+            explanation: "The IT Operations Portal had a 'Run System Backup' feature that returned a full database backup, including password hashes, to any logged-in user — even a junior admin who should never have access to credential data. The application also loaded a JavaScript configuration file from the server that contained the hashing salt ('CyberRange2024!') and algorithm ('MD5') in plain text. Since all JavaScript code that runs in the browser is visible to anyone using DevTools, this was essentially handing the keys to the attacker. You then wrote a dictionary attack script that hashed common passwords with the discovered salt using MD5, and compared each result to the admin's hash until you found a match. The password 'shadow' — a word found in virtually every common password list — cracked in milliseconds because MD5 is designed for speed, not security.",
+            technical: (
+                <div className="space-y-4">
+                    <div className="bg-red-50 p-4 border border-red-200 rounded text-red-900 text-sm shadow-sm">
+                        <strong className="flex items-center gap-2 mb-3 text-red-800 text-base">
+                            <AlertTriangle className="w-5 h-5" /> Real-World Impact
+                        </strong>
+                        <ul className="list-disc pl-5 space-y-2">
+                            <li><strong>LinkedIn (2012):</strong> 6.5 million SHA1 password hashes were leaked. Over 90% were cracked within hours because SHA1, like MD5, is too fast for password storage.</li>
+                            <li><strong>Adobe (2013):</strong> 153 million user accounts were exposed. Passwords were encrypted (not hashed) with a single key, allowing mass decryption.</li>
+                            <li><strong>RockYou (2009):</strong> 32 million passwords were stored in plain text. This leaked database (rockyou.txt) is now the most widely used wordlist for password cracking.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p className="text-red-600 font-mono text-sm mb-1">// Vulnerable Code (What this app did)</p>
+                        <div className="bg-red-50 p-3 rounded border border-red-200 font-mono text-sm">
+                            const hash = md5(password + "CyberRange2024!"); <br />
+                            // MD5 is broken — billions of hashes/sec on a GPU <br />
+                            // Salt hardcoded in client-side JavaScript <br />
+                            // Same salt used for ALL users
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-green-600 font-mono text-sm mb-1">// Secure Code (The Fix)</p>
+                        <div className="bg-green-50 p-3 rounded border border-green-200 font-mono text-sm">
+                            const salt = crypto.randomBytes(16); <br />
+                            // Unique random salt per user <br />
+                            const hash = bcrypt.hashSync(password, 12); <br />
+                            // bcrypt is intentionally slow — resistant to brute force <br />
+                            // Salt is generated server-side, never exposed to the client
+                        </div>
+                    </div>
+                </div>
+            )
         }
     };
 

@@ -1,4 +1,4 @@
-import { Server, Database, Lock, Globe } from 'lucide-react';
+import { Server, Database, Lock, Globe, Key } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const labs = [
@@ -37,6 +37,24 @@ const labs = [
         category: 'Config',
         icon: Server,
         path: '/simulation/lab-04'
+    },
+    {
+        id: 'lab-05',
+        title: 'Broken Access Control (IDOR)',
+        description: 'Access other users\' private documents by manipulating direct object references.',
+        difficulty: 'Medium',
+        category: 'Access',
+        icon: Lock,
+        path: '/simulation/lab-05'
+    },
+    {
+        id: 'lab-06',
+        title: 'Cryptographic Failures',
+        description: 'Crack weak password hashes and exploit exposed secrets to gain unauthorized admin access.',
+        difficulty: 'Hard',
+        category: 'Crypto',
+        icon: Key,
+        path: '/simulation/lab-06'
     }
 ];
 

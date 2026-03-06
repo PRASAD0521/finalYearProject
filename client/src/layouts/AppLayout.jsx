@@ -10,7 +10,7 @@ export default function AppLayout() {
     const navigation = [
         { name: 'Dashboard', href: '/dashboard', icon: Layout },
         { name: 'Training Labs', href: '/labs', icon: Book },
-        { name: 'Playground', href: '/playground', icon: ShoppingCart }, // Using ShoppingCart logic
+        { name: 'Playground', href: '/playground', icon: ShoppingCart, newTab: true },
         { name: 'Profile', href: '/profile', icon: User },
     ];
 
@@ -33,16 +33,34 @@ export default function AppLayout() {
                 <nav className="flex-1 p-4 space-y-1">
                     {navigation.map((item) => {
                         const isActive = location.pathname.startsWith(item.href);
+                        const className = clsx(
+                            'flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors',
+                            isActive
+                                ? 'bg-blue-600 text-white'
+                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                        );
+
+                        if (item.newTab) {
+                            return (
+                                <a
+                                    key={item.name}
+                                    href={item.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={className}
+                                >
+                                    <item.icon className="mr-3 h-5 w-5" />
+                                    {item.name}
+                                    <span className="ml-auto text-xs text-slate-500">↗</span>
+                                </a>
+                            );
+                        }
+
                         return (
                             <Link
                                 key={item.name}
                                 to={item.href}
-                                className={clsx(
-                                    'flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors',
-                                    isActive
-                                        ? 'bg-blue-600 text-white'
-                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                                )}
+                                className={className}
                             >
                                 <item.icon className="mr-3 h-5 w-5" />
                                 {item.name}

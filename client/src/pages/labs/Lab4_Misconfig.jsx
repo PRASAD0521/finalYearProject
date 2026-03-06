@@ -21,8 +21,8 @@ export default function Lab4_Misconfig() {
         { path: '/config', status: 403, statusText: 'Forbidden' },
         { path: '/server-status', status: 403, statusText: 'Forbidden' },
         { path: '/.env', status: 403, statusText: 'Forbidden' },
-        // The vulnerable one
-        { path: '/api/admin/debug', status: 200, statusText: 'OK', vulnerable: true }
+        // The vulnerable one (Modular Path)
+        { path: '/api/labs/lab4-misconfig/debug', status: 200, statusText: 'OK', vulnerable: true }
     ];
 
     const scrollToBottom = () => {
@@ -89,7 +89,7 @@ export default function Lab4_Misconfig() {
                         <p className="text-slate-300 text-sm">Objective: Find exposed debug information</p>
                     </div>
                     <div className="bg-slate-700 p-2 rounded">
-                        <span className="text-xs font-mono text-yellow-400">Target: /api/admin/debug</span>
+                        <span className="text-xs font-mono text-yellow-400">Target: /api/labs/lab4-misconfig/debug</span>
                     </div>
                 </div>
 
@@ -182,7 +182,7 @@ export default function Lab4_Misconfig() {
                                             CRITICAL LEAK DETECTED!
                                         </h3>
                                         <p className="text-red-700 mt-1">
-                                            The scanner found an exposed debug endpoint at <code>/api/admin/debug</code>.
+                                            The scanner found an exposed debug endpoint at <code>/api/labs/lab4-misconfig/debug</code>.
                                             This misconfiguration is leaking sensitive internal data.
                                         </p>
                                         <div className="mt-3">

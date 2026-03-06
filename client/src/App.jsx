@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProgressProvider } from './context/ProgressContext';
 import AppLayout from './layouts/AppLayout';
 import AuthLayout from './layouts/AuthLayout';
+import PlaygroundLayout from './layouts/PlaygroundLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -12,8 +13,17 @@ import Lab1 from './pages/labs/Lab1_SQLi';
 import Lab2 from './pages/labs/Lab2_XSS';
 import Lab3 from './pages/labs/Lab3_BrokenAuth';
 import Lab4 from './pages/labs/Lab4_Misconfig';
-import Playground from './pages/Playground';
+import Lab5 from './pages/labs/Lab5_IDOR';
+import Lab6 from './pages/labs/Lab6_Crypto';
 import LabReport from './pages/LabReport';
+
+// Playground Pages
+import PlaygroundHome from './pages/playground/PlaygroundHome';
+import ProductDetails from './pages/playground/ProductDetails';
+import PlaygroundCart from './pages/playground/PlaygroundCart';
+import PlaygroundLogin from './pages/playground/PlaygroundLogin';
+import PlaygroundProfile from './pages/playground/PlaygroundProfile';
+import PlaygroundScoreboard from './pages/playground/PlaygroundScoreboard';
 
 // Simple Route Guard
 const ProtectedRoute = ({ children }) => {
@@ -43,8 +53,19 @@ export default function App() {
               <Route path="/simulation/lab-02" element={<Lab2 />} />
               <Route path="/simulation/lab-03" element={<Lab3 />} />
               <Route path="/simulation/lab-04" element={<Lab4 />} />
+              <Route path="/simulation/lab-05" element={<Lab5 />} />
+              <Route path="/simulation/lab-06" element={<Lab6 />} />
               <Route path="/lab-report/:id" element={<LabReport />} />
-              <Route path="playground" element={<Playground />} />
+            </Route>
+
+            {/* Playground — Standalone Layout (opens in new tab) */}
+            <Route path="/playground" element={<PlaygroundLayout />}>
+              <Route index element={<PlaygroundHome />} />
+              <Route path="product/:id" element={<ProductDetails />} />
+              <Route path="cart" element={<PlaygroundCart />} />
+              <Route path="login" element={<PlaygroundLogin />} />
+              <Route path="profile" element={<PlaygroundProfile />} />
+              <Route path="scoreboard" element={<PlaygroundScoreboard />} />
             </Route>
 
             {/* Fallback */}

@@ -27,7 +27,7 @@ export default function PlaygroundScoreboard() {
 
     const fetchScoreboard = async () => {
         try {
-            const res = await axios.get(`http://localhost:4000/api/labs/playground/scoreboard?user_id=${pgUser?.id || 1}`);
+            const res = await axios.get(`/api/labs/playground/scoreboard?user_id=${pgUser?.id || 1}`);
             setChallenges(res.data.challenges);
             setTotalPoints(res.data.totalPoints);
             setSolvedCount(res.data.solvedCount);
@@ -43,7 +43,7 @@ export default function PlaygroundScoreboard() {
         setSubmitResult(null);
 
         try {
-            const res = await axios.post('http://localhost:4000/api/labs/playground/submit-flag', {
+            const res = await axios.post('/api/labs/playground/submit-flag', {
                 user_id: pgUser?.id || 1,
                 flag_code: flagInput.trim()
             });

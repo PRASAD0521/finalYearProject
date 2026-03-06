@@ -74,7 +74,7 @@ export default function Lab5_IDOR() {
 
     const fetchMyDocuments = async () => {
         try {
-            const res = await axios.get('http://localhost:4000/api/labs/lab5-idor/documents');
+            const res = await axios.get('/api/labs/lab5-idor/documents');
             setDocuments(res.data);
             if (res.data.length > 0) {
                 // Pre-select the first document to populate the viewer
@@ -92,7 +92,7 @@ export default function Lab5_IDOR() {
         setFlagCaptured(false);
 
         try {
-            const res = await axios.get(`http://localhost:4000/api/labs/lab5-idor/documents/${id}`);
+            const res = await axios.get(`/api/labs/lab5-idor/documents/${id}`);
             if (res.data.success) {
                 setSelectedDoc(res.data);
             }
@@ -115,7 +115,7 @@ export default function Lab5_IDOR() {
 
         try {
             // We just trigger the API. The user should be watching the Network tab.
-            const res = await axios.get(`http://localhost:4000/api/labs/lab5-idor/export?user_id=${targetId}`);
+            const res = await axios.get(`/api/labs/lab5-idor/export?user_id=${targetId}`);
 
             // Auto trigger file download simulation
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(res.data.exported_data, null, 2));

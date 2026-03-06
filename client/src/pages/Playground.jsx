@@ -14,7 +14,7 @@ export default function Playground() {
 
     const fetchProducts = async () => {
         try {
-            const res = await axios.get('http://localhost:4000/api/labs/playground/products');
+            const res = await axios.get('/api/labs/playground/products');
             setProducts(res.data);
             setLoading(false);
         } catch (err) {

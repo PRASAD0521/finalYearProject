@@ -73,7 +73,7 @@ export default function Lab6_Crypto() {
 
         // Dynamically inject the config.js script so it appears in the Network tab
         const script = document.createElement('script');
-        script.src = 'http://localhost:4000/api/labs/lab6-crypto/config.js';
+        script.src = '/api/labs/lab6-crypto/config.js';
         script.async = true;
         document.head.appendChild(script);
 
@@ -84,7 +84,7 @@ export default function Lab6_Crypto() {
 
     const fetchDashboard = async () => {
         try {
-            const res = await axios.get('http://localhost:4000/api/labs/lab6-crypto/dashboard');
+            const res = await axios.get('/api/labs/lab6-crypto/dashboard');
             setDashboardData(res.data);
         } catch (err) {
             console.error(err);
@@ -95,7 +95,7 @@ export default function Lab6_Crypto() {
     const handleBackupDownload = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:4000/api/labs/lab6-crypto/backup');
+            const res = await axios.get('/api/labs/lab6-crypto/backup');
             // Trigger a file download
             const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
             const url = window.URL.createObjectURL(blob);
@@ -120,7 +120,7 @@ export default function Lab6_Crypto() {
         setLoginResult(null);
 
         try {
-            const res = await axios.post('http://localhost:4000/api/labs/lab6-crypto/admin/login', {
+            const res = await axios.post('/api/labs/lab6-crypto/admin/login', {
                 username: adminUsername,
                 password: adminPassword
             });

@@ -13,7 +13,7 @@ export default function PlaygroundCart() {
         if (cart.length === 0) return;
         setProcessing(true);
         try {
-            const res = await axios.post('http://localhost:4000/api/labs/playground/checkout', {
+            const res = await axios.post('/api/labs/playground/checkout', {
                 user_id: pgUser?.id || 1,
                 items: cart.map(item => ({ name: item.name, qty: item.qty, price: item.price })),
                 total_amount: cartTotal

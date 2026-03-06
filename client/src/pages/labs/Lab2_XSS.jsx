@@ -18,7 +18,7 @@ export default function Lab2_XSS() {
         setLoading(true);
         try {
             // Updated to modular route
-            const res = await axios.get(`http://localhost:4000/api/labs/lab2-xss/products?q=${encodeURIComponent(query)}`);
+            const res = await axios.get(`/api/labs/lab2-xss/products?q=${encodeURIComponent(query)}`);
             setResults(res.data.products);
             setSearchTerm(res.data.searchTerm); // The vulnerable echoed string
 

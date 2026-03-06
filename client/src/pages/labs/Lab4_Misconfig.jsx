@@ -50,7 +50,7 @@ export default function Lab4_Misconfig() {
 
             if (endpoint.vulnerable) {
                 try {
-                    const res = await axios.get(`http://localhost:4000${endpoint.path}`);
+                    const res = await axios.get(`${endpoint.path}`);
                     setLogs(prev => [...prev, { type: 'success', message: `FOUND: ${endpoint.path} [${res.status} OK] - EXPOSED EVENT DETECTED!` }]);
                     setDebugData(res.data);
                     markLabComplete(4); // Mark Lab 4 as complete

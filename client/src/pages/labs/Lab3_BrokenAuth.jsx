@@ -27,7 +27,7 @@ export default function Lab3_BrokenAuth() {
         setFeedback(null);
         try {
             // Modular route
-            await axios.post('http://localhost:4000/api/labs/lab3-brokenauth/otp-generate', { username: 'admin' });
+            await axios.post('/api/labs/lab3-brokenauth/otp-generate', { username: 'admin' });
             setStep('OTP'); // Changed from 'otp' to 'OTP' to match existing state values
             setFeedback({ type: 'info', message: `OTP sent to ${username}***@example.com` });
         } catch (err) {
@@ -43,7 +43,7 @@ export default function Lab3_BrokenAuth() {
         try {
             // 1. Make the real request
             // Modular route
-            const response = await axios.post('http://localhost:4000/api/labs/lab3-brokenauth/otp-verify', {
+            const response = await axios.post('/api/labs/lab3-brokenauth/otp-verify', {
                 username: 'admin',
                 otp
             });
@@ -91,7 +91,7 @@ export default function Lab3_BrokenAuth() {
         e.preventDefault();
         try {
             // Modular route
-            const res = await axios.post('http://localhost:4000/api/labs/lab3-brokenauth/reset-password', {
+            const res = await axios.post('/api/labs/lab3-brokenauth/reset-password', {
                 username: 'admin',
                 newPassword: newPassword
             });

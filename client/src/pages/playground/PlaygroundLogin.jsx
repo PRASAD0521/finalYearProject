@@ -37,13 +37,13 @@ export default function PlaygroundLogin() {
 
         try {
             if (isRegister) {
-                const res = await axios.post('http://localhost:4000/api/labs/playground/register', { username, password });
+                const res = await axios.post('/api/labs/playground/register', { username, password });
                 if (res.data.success) {
                     pgLogin(res.data.user);
                     navigate('/playground');
                 }
             } else {
-                const res = await axios.post('http://localhost:4000/api/labs/playground/login', { username, password });
+                const res = await axios.post('/api/labs/playground/login', { username, password });
                 if (res.data.success) {
                     pgLogin(res.data.user);
                     navigate('/playground');

@@ -30,7 +30,7 @@ export default function ProductDetails() {
 
     const fetchProductData = async () => {
         try {
-            const res = await axios.get(`http://localhost:4000/api/labs/playground/products/${id}`);
+            const res = await axios.get(`/api/labs/playground/products/${id}`);
             setProduct(res.data);
             setReviews(res.data.reviews || []);
         } catch (err) {
@@ -49,7 +49,7 @@ export default function ProductDetails() {
         e.preventDefault();
         setSubmitting(true);
         try {
-            await axios.post('http://localhost:4000/api/labs/playground/reviews', {
+            await axios.post('/api/labs/playground/reviews', {
                 product_id: id,
                 user_id: pgUser?.id || 1,
                 username: pgUser?.username || 'Guest',

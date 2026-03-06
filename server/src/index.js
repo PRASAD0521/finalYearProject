@@ -11,8 +11,15 @@ const app = express();
 const PORT = 4000;
 
 // Middleware
+const allowedOrigins = [
+    'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176'
+];
+if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176'],
+    origin: allowedOrigins,
     credentials: true
 }));
 app.use(express.json());

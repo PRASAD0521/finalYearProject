@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
         try {
             // Intentionally vulnerable endpoint usage in real implementation
             // For now, we point to the backend
-            const res = await axios.post('http://localhost:4000/api/login', { username, password });
+            const res = await axios.post('/api/login', { username, password });
             setUser(res.data.user);
             localStorage.setItem('user', JSON.stringify(res.data.user));
             return { success: true };
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (username, password) => {
         try {
-            const res = await axios.post('http://localhost:4000/api/register', { username, password });
+            const res = await axios.post('/api/register', { username, password });
             return { success: true, message: res.data.message };
         } catch (error) {
             return {

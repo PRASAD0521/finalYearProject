@@ -30,7 +30,7 @@ export default function PlaygroundHome() {
             if (activeCategory !== 'All') params.category = activeCategory;
             if (searchQuery) params.search = searchQuery;
 
-            const res = await axios.get('http://localhost:4000/api/labs/playground/products', { params });
+            const res = await axios.get('/api/labs/playground/products', { params });
             setProducts(res.data);
         } catch (err) {
             console.error("Failed to load products", err);

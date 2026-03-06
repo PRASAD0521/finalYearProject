@@ -20,8 +20,8 @@ export default function PlaygroundProfile() {
         try {
             const profileId = pgUser?.id || 1;
             const [profileRes, ordersRes] = await Promise.all([
-                axios.get(`http://localhost:4000/api/labs/playground/profile/${profileId}`),
-                axios.get(`http://localhost:4000/api/labs/playground/orders?user_id=${profileId}`)
+                axios.get(`/api/labs/playground/profile/${profileId}`),
+                axios.get(`/api/labs/playground/orders?user_id=${profileId}`)
             ]);
             setProfile(profileRes.data);
             setOrders(ordersRes.data);
@@ -34,7 +34,7 @@ export default function PlaygroundProfile() {
     const handleViewOrder = async () => {
         if (!viewOrderId) return;
         try {
-            const res = await axios.get(`http://localhost:4000/api/labs/playground/orders/${viewOrderId}`);
+            const res = await axios.get(`/api/labs/playground/orders/${viewOrderId}`);
             setViewedOrder(res.data);
         } catch (err) {
             setViewedOrder({ error: 'Order not found' });

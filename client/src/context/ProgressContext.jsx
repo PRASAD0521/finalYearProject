@@ -1,29 +1,42 @@
 import { createContext, useState, useContext, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const ProgressContext = createContext(null);
 
 export const ProgressProvider = ({ children }) => {
+    const { user } = useAuth(); // Get the currently logged-in user
+
     // Initial state: 6 labs, all incomplete by default
-    const [progress, setProgress] = useState({
+    const defaultProgress = {
         1: false, // SQLi
         2: false, // XSS
         3: false, // Broken Auth
         4: false, // Misconfiguration
         5: false, // IDOR
         6: false  // Crypto
-    });
+    };
+
+    const [progress, setProgress] = useState(defaultProgress);
 
     useEffect(() => {
-        const storedProgress = localStorage.getItem('lab_progress');
-        if (storedProgress) {
-            setProgress(JSON.parse(storedProgress));
+        if (user?.username) {
+            const storedProgress = localStorage.getItem(`lab_progress_${user.username}`);
+            if (storedProgress) {
+                setProgress(JSON.parse(storedProgress));
+            } else {
+                setProgress(defaultProgress); // New user has no progress
+            }
+        } else {
+            setProgress(defaultProgress); // Clear progress when logged out
         }
-    }, []);
+    }, [user]);
 
     const markLabComplete = (labId) => {
         setProgress(prev => {
             const newProgress = { ...prev, [labId]: true };
-            localStorage.setItem('lab_progress', JSON.stringify(newProgress));
+            if (user?.username) {
+                localStorage.setItem(`lab_progress_${user.username}`, JSON.stringify(newProgress));
+            }
             return newProgress;
         });
     };

@@ -122,13 +122,22 @@ export default function PlaygroundCart() {
                             </div>
                         </div>
 
-                        <button
-                            onClick={handleCheckout}
-                            disabled={processing}
-                            className="btn btn-primary w-full text-sm"
-                        >
-                            {processing ? 'Processing...' : 'Place Order'}
-                        </button>
+                        {pgUser ? (
+                            <button
+                                onClick={handleCheckout}
+                                disabled={processing}
+                                className="btn btn-primary w-full text-sm"
+                            >
+                                {processing ? 'Processing...' : 'Place Order'}
+                            </button>
+                        ) : (
+                            <Link
+                                to="/playground/login"
+                                className="block text-center btn btn-primary w-full text-sm"
+                            >
+                                Login to Checkout
+                            </Link>
+                        )}
 
                         <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-md">
                             <div className="flex items-start gap-1.5">

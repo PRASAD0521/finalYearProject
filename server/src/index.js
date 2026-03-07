@@ -78,6 +78,10 @@ registerLabs(app);
 const progressRoutes = require('./routes/progress');
 app.use('/api', progressRoutes);
 
+// 5. Secure Time-Gated Hints
+const hintsRoutes = require('./routes/hints');
+app.use('/api/hints', hintsRoutes);
+
 app.listen(PORT, () => {
     console.log(`Scalable CyberRange Server running on http://localhost:${PORT}`);
     console.log(`- Platform DB: Secure`);

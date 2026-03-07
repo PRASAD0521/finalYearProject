@@ -7,13 +7,6 @@ import { useProgress } from '../../context/ProgressContext';
 import { useAuth } from '../../context/AuthContext';
 
 // ============================================================
-// CONFIGURABLE HINT TIMERS (in milliseconds)
-// Change these values to adjust when hints unlock
-// ============================================================
-const HINT_1_DELAY = 10 * 60 * 1000;   // 10 minutes
-const HINT_2_DELAY = 30 * 60 * 1000;   // 30 minutes
-const HINT_3_DELAY = 60 * 60 * 1000;   // 60 minutes
-const HINT_4_DELAY = 90 * 60 * 1000;   // 90 minutes
 
 export default function Lab6_Crypto() {
 
@@ -34,31 +27,49 @@ export default function Lab6_Crypto() {
     const [flagInput, setFlagInput] = useState('');
     const [flagError, setFlagError] = useState('');
 
-    // --- HINT TIMER STATE ---
-    const [timeElapsed, setTimeElapsed] = useState(0);
-    const [showHint1, setShowHint1] = useState(false);
-    const [showHint2, setShowHint2] = useState(false);
-    const [showHint3, setShowHint3] = useState(false);
-    const [showHint4, setShowHint4] = useState(false);
+    // --- SECURE BACKEND HINT SYSTEM ---
+    const [hintStatus, setHintStatus] = useState({ elapsed_ms: 0, delays: { 1: 600000, 2: 1800000, 3: 3600000, 4: 5400000 } });
+    const [unlockedHints, setUnlockedHints] = useState({});
+    const [hintError, setHintError] = useState('');
     const [showHintsMenu, setShowHintsMenu] = useState(false);
 
     const { markLabComplete } = useProgress();
     const { user } = useAuth();
 
-    // Timer for hints
+    // Initialize lab and fetch hint status
+    useEffect(() => {
+        if (!user) return;
+        const initLab = async () => {
+            try {
+                await axios.post('/api/hints/start', { labId: 6, userId: user.id });
+                const res = await axios.get(`/api/hints/6/status?user_id=${user.id}`);
+                setHintStatus(res.data);
+            } catch (err) {
+                console.error("Error initializing lab hints:", err);
+            }
+        };
+        initLab();
+    }, [user]);
+
+    // Local tick for UI timer
     useEffect(() => {
         const timer = setInterval(() => {
-            setTimeElapsed(prev => {
-                const newTime = prev + 1000;
-                if (!showHint1 && newTime >= HINT_1_DELAY) setShowHint1(true);
-                if (!showHint2 && newTime >= HINT_2_DELAY) setShowHint2(true);
-                if (!showHint3 && newTime >= HINT_3_DELAY) setShowHint3(true);
-                if (!showHint4 && newTime >= HINT_4_DELAY) setShowHint4(true);
-                return newTime;
-            });
+            setHintStatus(prev => ({ ...prev, elapsed_ms: prev.elapsed_ms + 1000 }));
         }, 1000);
         return () => clearInterval(timer);
-    }, [showHint1, showHint2, showHint3, showHint4]);
+    }, []);
+
+    const unlockHint = async (hintId) => {
+        setHintError('');
+        try {
+            const res = await axios.get(`/api/hints/6/${hintId}?user_id=${user?.id}`);
+            if (res.data.success) {
+                setUnlockedHints(prev => ({ ...prev, [hintId]: res.data.hint }));
+            }
+        } catch (err) {
+            setHintError(err.response?.data?.error || 'Error unlocking hint.');
+        }
+    };
 
     const formatTime = (ms) => {
         const totalSeconds = Math.floor(ms / 1000);
@@ -256,44 +267,50 @@ export default function Lab6_Crypto() {
                                 </div>
                             )}
 
-                            {/* Hint System */}
+                            {/* Secure Server-Side Hint System */}
                             <div className="mt-5 border-t border-gray-100 pt-3">
                                 <div className="flex justify-between items-center">
                                     <button
                                         onClick={() => setShowHintsMenu(!showHintsMenu)}
                                         className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none"
                                     >
-                                        <Lightbulb className={`w-4 h-4 ${(showHint1 || showHint2 || showHint3 || showHint4) ? 'text-yellow-500' : 'text-gray-400'}`} />
+                                        <Lightbulb className={`w-4 h-4 text-yellow-500`} />
                                         {showHintsMenu ? 'Hide Tactical Hints' : 'Need a Hint?'}
                                         {showHintsMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                     </button>
                                     <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded border border-gray-100 flex items-center gap-2">
-                                        <span className={`w-2 h-2 rounded-full ${(showHint1 || showHint2 || showHint3 || showHint4) ? 'bg-yellow-400 animate-pulse' : 'bg-gray-300'}`}></span>
-                                        Time Elapsed: {formatTime(timeElapsed)}
+                                        <span className={`w-2 h-2 rounded-full bg-yellow-400 animate-pulse`}></span>
+                                        Time Elapsed: {formatTime(hintStatus.elapsed_ms)}
                                     </span>
                                 </div>
 
                                 {showHintsMenu && (
                                     <div className="mt-4 space-y-2 animate-fade-in-up">
-                                        <div className={`text-sm p-3 rounded border transition-all ${showHint1 ? 'bg-yellow-50 border-yellow-200 text-yellow-800' : 'bg-gray-50 border-gray-200 text-gray-400 opacity-60'}`}>
-                                            <strong className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> Hint 1 {showHint1 ? '' : `(Unlocks at ${formatTime(HINT_1_DELAY)})`}:</strong>
-                                            {showHint1 ? " The 'Run System Backup' button triggers an API call. Open DevTools (F12 → Network Tab) and inspect what data comes back from the server." : " Locked"}
-                                        </div>
-
-                                        <div className={`text-sm p-3 rounded border transition-all ${showHint2 ? 'bg-orange-50 border-orange-200 text-orange-800' : 'bg-gray-50 border-gray-200 text-gray-400 opacity-60'}`}>
-                                            <strong className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> Hint 2 {showHint2 ? '' : `(Unlocks at ${formatTime(HINT_2_DELAY)})`}:</strong>
-                                            {showHint2 ? " You found hashes, but they're salted. The application loads a JavaScript configuration file from the server. Try inspecting the Network tab for a `.js` file that might contain the salt and algorithm." : " Locked"}
-                                        </div>
-
-                                        <div className={`text-sm p-3 rounded border transition-all ${showHint3 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-gray-50 border-gray-200 text-gray-400 opacity-60'}`}>
-                                            <strong className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> Hint 3 {showHint3 ? '' : `(Unlocks at ${formatTime(HINT_3_DELAY)})`}:</strong>
-                                            {showHint3 ? " The algorithm is MD5 and the salt is appended after the password: MD5(password + salt). Search online for 'rockyou.txt' or a common passwords wordlist, then write a script to hash each word with the salt until you find a match." : " Locked"}
-                                        </div>
-
-                                        <div className={`text-sm p-3 rounded border transition-all ${showHint4 ? 'bg-purple-50 border-purple-200 text-purple-800' : 'bg-gray-50 border-gray-200 text-gray-400 opacity-60'}`}>
-                                            <strong className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> Hint 4 {showHint4 ? '' : `(Unlocks at ${formatTime(HINT_4_DELAY)})`}:</strong>
-                                            {showHint4 ? " Use the Admin Panel tab to log in with the cracked password. The username is 'admin'." : " Locked"}
-                                        </div>
+                                        {hintError && <div className="text-red-500 text-xs font-bold mb-2 p-2 bg-red-50 rounded border border-red-200">{hintError}</div>}
+                                        {[1, 2, 3, 4].map(hintId => {
+                                            const isUnlocked = !!unlockedHints[hintId];
+                                            const delayMs = hintStatus.delays[hintId] || 0;
+                                            const isReadyToUnlock = hintStatus.elapsed_ms >= delayMs;
+                                            return (
+                                                <div key={hintId} className={`text-sm p-3 rounded border transition-all ${isUnlocked ? 'bg-yellow-50 border-yellow-200 text-yellow-800' : 'bg-gray-50 border-gray-200 text-gray-400 opacity-60'}`}>
+                                                    <strong className="flex justify-between items-center gap-1 mb-1">
+                                                        <span className="flex items-center gap-1">
+                                                            <AlertTriangle className="w-4 h-4" /> Hint {hintId}
+                                                            {isUnlocked ? '' : ` (Unlocks at ${formatTime(delayMs)})`}
+                                                        </span>
+                                                        {!isUnlocked && isReadyToUnlock && (
+                                                            <button
+                                                                onClick={() => unlockHint(hintId)}
+                                                                className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 border border-yellow-500 text-xs px-2 py-1 rounded font-bold transition-colors"
+                                                            >
+                                                                Reveal Hint
+                                                            </button>
+                                                        )}
+                                                    </strong>
+                                                    {isUnlocked ? unlockedHints[hintId] : "Locked server-side."}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>

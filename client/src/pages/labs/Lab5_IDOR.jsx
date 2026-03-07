@@ -18,34 +18,47 @@ export default function Lab5_IDOR() {
     const [error, setError] = useState(null);
     const [flagCaptured, setFlagCaptured] = useState(false);
 
-    // --- TIMERS FOR HINTS ---
-    // Configurable hint delays (in milliseconds)
-    const HINT_1_DELAY = 10 * 60 * 1000; // 10 minutes
-    const HINT_2_DELAY = 30 * 60 * 1000; // 30 minutes
-    const HINT_3_DELAY = 60 * 60 * 1000; // 60 minutes
+    // --- SECURE BACKEND HINT SYSTEM ---
+    const [hintStatus, setHintStatus] = useState({ elapsed_ms: 0, delays: { 1: 600000, 2: 1800000, 3: 3600000 } });
+    const [unlockedHints, setUnlockedHints] = useState({});
+    const [hintError, setHintError] = useState('');
 
-    const [timeElapsed, setTimeElapsed] = useState(0);
-    const [showHint1, setShowHint1] = useState(false);
-    const [showHint2, setShowHint2] = useState(false);
-    const [showHint3, setShowHint3] = useState(false);
+    // Initialize lab and fetch hint status
+    useEffect(() => {
+        if (!user) return;
+        const initLab = async () => {
+            try {
+                // Record start time unconditionally
+                await axios.post('/api/hints/start', { labId: 5, userId: user.id });
+                // Fetch initial status
+                const res = await axios.get(`/api/hints/5/status?user_id=${user.id}`);
+                setHintStatus(res.data);
+            } catch (err) {
+                console.error("Error initializing lab hints:", err);
+            }
+        };
+        initLab();
+    }, [user]);
 
-    // Timer interval for hints
+    // Local tick for UI timer
     useEffect(() => {
         const timer = setInterval(() => {
-            setTimeElapsed(prev => {
-                const newTime = prev + 1000;
-
-                // Check if hints should unlock
-                if (!showHint1 && newTime >= HINT_1_DELAY) setShowHint1(true);
-                if (!showHint2 && newTime >= HINT_2_DELAY) setShowHint2(true);
-                if (!showHint3 && newTime >= HINT_3_DELAY) setShowHint3(true);
-
-                return newTime;
-            });
+            setHintStatus(prev => ({ ...prev, elapsed_ms: prev.elapsed_ms + 1000 }));
         }, 1000);
-
         return () => clearInterval(timer);
-    }, [showHint1, showHint2, showHint3]);
+    }, []);
+
+    const unlockHint = async (hintId) => {
+        setHintError('');
+        try {
+            const res = await axios.get(`/api/hints/5/${hintId}?user_id=${user?.id}`);
+            if (res.data.success) {
+                setUnlockedHints(prev => ({ ...prev, [hintId]: res.data.hint }));
+            }
+        } catch (err) {
+            setHintError(err.response?.data?.error || 'Error unlocking hint. Try again later.');
+        }
+    };
 
     const formatTime = (ms) => {
         const totalSeconds = Math.floor(ms / 1000);
@@ -249,40 +262,51 @@ export default function Lab5_IDOR() {
                                 <p className="text-red-500 text-xs mt-2 font-bold animate-pulse">{flagError}</p>
                             )}
 
-                            {/* Hidden Hint System Toggle */}
+                            {/* Secure Server-Side Hint System Toggle */}
                             <div className="mt-5 border-t border-gray-100 pt-3">
                                 <div className="flex justify-between items-center">
                                     <button
                                         onClick={() => setShowHintsMenu(!showHintsMenu)}
                                         className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none"
                                     >
-                                        <Lightbulb className={`w-4 h-4 ${showHint1 ? 'text-yellow-500' : 'text-gray-400'}`} />
+                                        <Lightbulb className={`w-4 h-4 text-yellow-500`} />
                                         {showHintsMenu ? 'Hide Tactical Hints' : 'Need a Hint?'}
                                         {showHintsMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                     </button>
                                     <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded border border-gray-100 flex items-center gap-2">
-                                        <span className={`w-2 h-2 rounded-full ${(showHint1 || showHint2 || showHint3) ? 'bg-yellow-400 animate-pulse' : 'bg-gray-300'}`}></span>
-                                        Time Elapsed: {formatTime(timeElapsed)}
+                                        <span className={`w-2 h-2 rounded-full bg-yellow-400 animate-pulse`}></span>
+                                        Time Elapsed: {formatTime(hintStatus.elapsed_ms)}
                                     </span>
                                 </div>
 
                                 {/* Progressive Hint System (Expanded state) */}
                                 {showHintsMenu && (
                                     <div className="mt-4 space-y-2 animate-fade-in-up">
-                                        <div className={`text-sm p-3 rounded border transition-all ${showHint1 ? 'bg-yellow-50 border-yellow-200 text-yellow-800' : 'bg-gray-50 border-gray-200 text-gray-400 opacity-60'}`}>
-                                            <strong className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> Hint 1 {showHint1 ? '' : `(Unlocks at ${formatTime(HINT_1_DELAY)})`}:</strong>
-                                            {showHint1 ? " Open DevTools (F12), go to the Network tab, and click the Export button. Look at the API URL. Notice the 'user_id' parameter?" : " Locked"}
-                                        </div>
-
-                                        <div className={`text-sm p-3 rounded border transition-all ${showHint2 ? 'bg-orange-50 border-orange-200 text-orange-800' : 'bg-gray-50 border-gray-200 text-gray-400 opacity-60'}`}>
-                                            <strong className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> Hint 2 {showHint2 ? '' : `(Unlocks at ${formatTime(HINT_2_DELAY)})`}:</strong>
-                                            {showHint2 ? " You cannot change the parameter in the UI. You must right-click the request in the Network tab, select 'Copy as Fetch', paste it into your console, and manually change the ID." : " Locked"}
-                                        </div>
-
-                                        <div className={`text-sm p-3 rounded border transition-all ${showHint3 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-gray-50 border-gray-200 text-gray-400 opacity-60'}`}>
-                                            <strong className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> Hint 3 {showHint3 ? '' : `(Unlocks at ${formatTime(HINT_3_DELAY)})`}:</strong>
-                                            {showHint3 ? " The CEO is User ID 2. Replay the export request with 'user_id=2'. View the raw JSON response payload to find the flag." : " Locked"}
-                                        </div>
+                                        {hintError && <div className="text-red-500 text-xs font-bold mb-2 p-2 bg-red-50 rounded border border-red-200">{hintError}</div>}
+                                        {[1, 2, 3].map(hintId => {
+                                            const isUnlocked = !!unlockedHints[hintId];
+                                            const delayMs = hintStatus.delays[hintId] || 0;
+                                            const isReadyToUnlock = hintStatus.elapsed_ms >= delayMs;
+                                            return (
+                                                <div key={hintId} className={`text-sm p-3 rounded border transition-all ${isUnlocked ? 'bg-yellow-50 border-yellow-200 text-yellow-800' : 'bg-gray-50 border-gray-200 text-gray-400 opacity-60'}`}>
+                                                    <strong className="flex justify-between items-center gap-1 mb-1">
+                                                        <span className="flex items-center gap-1">
+                                                            <AlertTriangle className="w-4 h-4" /> Hint {hintId}
+                                                            {isUnlocked ? '' : ` (Unlocks at ${formatTime(delayMs)})`}
+                                                        </span>
+                                                        {!isUnlocked && isReadyToUnlock && (
+                                                            <button
+                                                                onClick={() => unlockHint(hintId)}
+                                                                className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 border border-yellow-500 text-xs px-2 py-1 rounded font-bold transition-colors"
+                                                            >
+                                                                Reveal Hint
+                                                            </button>
+                                                        )}
+                                                    </strong>
+                                                    {isUnlocked ? unlockedHints[hintId] : "Locked server-side."}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>

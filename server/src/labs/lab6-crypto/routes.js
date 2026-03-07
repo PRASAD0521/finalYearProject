@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const { playgroundDB } = require('../../database/connection');
+const { playgroundDB, platformDB } = require('../../database/connection');
 
 // ============================================================
 // LAB 6: CRYPTOGRAPHIC FAILURES
@@ -159,7 +159,7 @@ router.post('/admin/login', (req, res) => {
 // POST /api/labs/lab6-crypto/verify
 // Secure flag validation endpoint
 router.post('/verify', (req, res) => {
-    const { flag } = req.body;
+    const { flag, user_id } = req.body;
 
     playgroundDB.get(
         "SELECT * FROM pg_flags WHERE challenge_id = 'LAB6_CRYPTO' AND flag_code = ?",
@@ -168,6 +168,12 @@ router.post('/verify', (req, res) => {
             if (err) return res.status(500).json({ error: err.message });
 
             if (row || flag === 'FLAG{cr4ck3d_w34k_h4sh_88}') {
+                if (user_id) {
+                    platformDB.run(
+                        "INSERT OR IGNORE INTO completed_labs (user_id, lab_id) VALUES (?, ?)",
+                        [user_id, 6]
+                    );
+                }
                 res.json({ success: true, message: 'Flag verified successfully!' });
             } else {
                 res.status(400).json({ success: false, error: 'Incorrect flag. Keep cracking!' });

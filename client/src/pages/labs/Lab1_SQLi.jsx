@@ -5,9 +5,11 @@ import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 import LabBriefing from '../../components/LabBriefing';
 import { useProgress } from '../../context/ProgressContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Lab1_SQLi() {
     const { markLabComplete } = useProgress();
+    const { user } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [feedback, setFeedback] = useState(null);
@@ -21,7 +23,8 @@ export default function Lab1_SQLi() {
             // Updated to modular route
             const res = await axios.post('/api/labs/lab1-sqli/login', {
                 username,
-                password
+                password,
+                user_id: user?.id
             });
 
             if (res.data.success) {

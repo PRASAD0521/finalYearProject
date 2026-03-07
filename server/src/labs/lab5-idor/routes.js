@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { playgroundDB } = require('../../database/connection');
+const { platformDB, playgroundDB } = require('../../database/connection');
 
 // ============================================================
 // LAB 5: BROKEN ACCESS CONTROL (IDOR)
@@ -105,7 +105,7 @@ router.get('/export', (req, res) => {
 // POST /api/labs/lab5-idor/verify
 // Secure flag validation endpoint
 router.post('/verify', (req, res) => {
-    const { flag } = req.body;
+    const { flag, user_id } = req.body;
 
     playgroundDB.get(
         "SELECT * FROM pg_flags WHERE challenge_id = 'LAB5_IDOR' AND flag_code = ?",
@@ -114,6 +114,12 @@ router.post('/verify', (req, res) => {
             if (err) return res.status(500).json({ error: err.message });
 
             if (row || flag === 'FLAG{idor_api_bypass_77}') {
+                if (user_id) {
+                    platformDB.run(
+                        "INSERT OR IGNORE INTO completed_labs (user_id, lab_id) VALUES (?, ?)",
+                        [user_id, 5]
+                    );
+                }
                 res.json({ success: true, message: 'Flag verified successfully!' });
             } else {
                 res.status(400).json({ success: false, error: 'Incorrect flag. Try accessing different documents or API endpoints.' });

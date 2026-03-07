@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Server, Shield, Lock, Unlock, AlertTriangle, DownloadCloud, Key, Terminal, Lightbulb, ChevronDown, ChevronUp, FileText, Activity, Database, Eye } from 'lucide-react';
 import LabBriefing from '../../components/LabBriefing';
 import { useProgress } from '../../context/ProgressContext';
+import { useAuth } from '../../context/AuthContext';
 
 // ============================================================
 // CONFIGURABLE HINT TIMERS (in milliseconds)
@@ -42,6 +43,7 @@ export default function Lab6_Crypto() {
     const [showHintsMenu, setShowHintsMenu] = useState(false);
 
     const { markLabComplete } = useProgress();
+    const { user } = useAuth();
 
     // Timer for hints
     useEffect(() => {
@@ -137,7 +139,10 @@ export default function Lab6_Crypto() {
     const submitFlag = async () => {
         setFlagError('');
         try {
-            const res = await axios.post('/api/labs/lab6-crypto/verify', { flag: flagInput.trim() });
+            const res = await axios.post('/api/labs/lab6-crypto/verify', {
+                flag: flagInput.trim(),
+                user_id: user?.id
+            });
             if (res.data.success) {
                 setFlagCaptured(true);
                 markLabComplete(6);

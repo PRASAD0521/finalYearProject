@@ -4,9 +4,11 @@ import { Link } from 'react-router-dom';
 import { FileText, Lock, Unlock, AlertTriangle, Eye, Server, RefreshCw, DownloadCloud, Terminal, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
 import LabBriefing from '../../components/LabBriefing';
 import { useProgress } from '../../context/ProgressContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Lab5_IDOR() {
     const { markLabComplete } = useProgress();
+    const { user } = useAuth();
     const [documents, setDocuments] = useState([]);
     const [selectedDoc, setSelectedDoc] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -60,7 +62,10 @@ export default function Lab5_IDOR() {
     const submitFlag = async () => {
         setFlagError('');
         try {
-            const res = await axios.post('/api/labs/lab5-idor/verify', { flag: flagInput.trim() });
+            const res = await axios.post('/api/labs/lab5-idor/verify', {
+                flag: flagInput.trim(),
+                user_id: user?.id
+            });
             if (res.data.success) {
                 setFlagCaptured(true);
                 markLabComplete(5);

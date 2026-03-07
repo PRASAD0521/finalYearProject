@@ -74,6 +74,10 @@ app.post('/api/login', (req, res) => {
 // Auto-loads /api/labs/lab1-sqli, etc.
 registerLabs(app);
 
+// 4. Progress Tracking & Reports
+const progressRoutes = require('./routes/progress');
+app.use('/api', progressRoutes);
+
 app.listen(PORT, () => {
     console.log(`Scalable CyberRange Server running on http://localhost:${PORT}`);
     console.log(`- Platform DB: Secure`);

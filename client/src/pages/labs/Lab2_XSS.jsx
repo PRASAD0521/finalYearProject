@@ -5,9 +5,11 @@ import { Search, AlertTriangle } from 'lucide-react';
 
 import LabBriefing from '../../components/LabBriefing';
 import { useProgress } from '../../context/ProgressContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Lab2_XSS() {
     const { markLabComplete, progress } = useProgress();
+    const { user } = useAuth();
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -17,14 +19,13 @@ export default function Lab2_XSS() {
         e.preventDefault();
         setLoading(true);
         try {
-            // Updated to modular route
-            const res = await axios.get(`/api/labs/lab2-xss/products?q=${encodeURIComponent(query)}`);
+            const userParams = progress[2] ? '' : `&user_id=${user?.id || ''}`;
+            const res = await axios.get(`/api/labs/lab2-xss/products?q=${encodeURIComponent(query)}${userParams}`);
             setResults(res.data.products);
             setSearchTerm(res.data.searchTerm); // The vulnerable echoed string
 
-            // Check if successful XSS payload
-            const payload = res.data.searchTerm.toLowerCase();
-            if (payload.includes('<script') || (payload.includes('<img') && payload.includes('onerror'))) {
+            // Check if successful XSS payload from backend response
+            if (res.data.success) {
                 markLabComplete(2);
             }
         } catch (err) {

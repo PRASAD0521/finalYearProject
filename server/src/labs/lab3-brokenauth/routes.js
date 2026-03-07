@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { labsDB } = require('../../database/connection');
+const { labsDB, platformDB } = require('../../database/connection');
 
 // Route: /api/labs/lab3-brokenauth/...
 
@@ -32,7 +32,7 @@ router.post('/otp-verify', (req, res) => {
 
 // 3. Reset Password (Broken Access Control)
 router.post('/reset-password', (req, res) => {
-    const { username, newPassword } = req.body;
+    const { username, newPassword, user_id } = req.body;
 
     // Vulnerability: No session check!
     const query = `UPDATE lab_users SET password = '${newPassword}' WHERE username = '${username}'`;
@@ -40,6 +40,12 @@ router.post('/reset-password', (req, res) => {
     labsDB.run(query, function (err) {
         if (err) return res.status(500).json({ error: err.message });
         if (this.changes > 0) {
+            if (user_id) {
+                platformDB.run(
+                    "INSERT OR IGNORE INTO completed_labs (user_id, lab_id) VALUES (?, ?)",
+                    [user_id, 3]
+                );
+            }
             res.json({ success: true, message: `Password for ${username} reset successfully.` });
         } else {
             res.status(404).json({ success: false, message: 'User not found' });

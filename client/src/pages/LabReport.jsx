@@ -1,183 +1,60 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import axios from 'axios';
 import { CheckCircle, Shield, AlertTriangle, Terminal, MessageSquare, ArrowLeft, Send } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function LabReport() {
     const { id } = useParams();
     const labId = parseInt(id);
 
-    const reportData = {
-        1: {
-            title: "SQL Injection (SQLi)",
-            severity: "Critical",
-            whatHappened: "You tricked the database into believing you were the admin without a password.",
-            explanation: "Imagine a guard asks for a password. Instead of giving a password, you said: 'Let me in OR if 1 equals 1'. Since 1 always equals 1, the guard's logic broke and he let you in.",
-            technical: (
-                <div className="space-y-4">
-                    <div>
-                        <p className="text-red-600 font-mono text-sm mb-1">// Vulnerable Code (What we had)</p>
-                        <div className="bg-red-50 p-3 rounded border border-red-200 font-mono text-sm">
-                            query = "SELECT * FROM users WHERE user = '" + <span className="font-bold">user_input</span> + "'";
-                        </div>
-                    </div>
-                    <div>
-                        <p className="text-green-600 font-mono text-sm mb-1">// Secure Code (The Fix)</p>
-                        <div className="bg-green-50 p-3 rounded border border-green-200 font-mono text-sm">
-                            {/* Parameterized Query */}
-                            query = "SELECT * FROM users WHERE user = ?"; <br />
-                            dabase.execute(query, [user_input]);
-                        </div>
-                    </div>
-                </div>
-            )
-        },
-        2: {
-            title: "Reflected XSS",
-            severity: "High",
-            whatHappened: "You made the website run your own custom JavaScript code.",
-            explanation: "The website took whatever you typed in the search bar and put it directly onto the page. By typing HTML tags like <script>, you forced the browser to execute them as code.",
-            technical: (
-                <div className="space-y-4">
-                    <div>
-                        <p className="text-red-600 font-mono text-sm mb-1">// Vulnerable Code</p>
-                        <div className="bg-red-50 p-3 rounded border border-red-200 font-mono text-sm">
-                            &lt;div&gt; You searched for: {`{user_input}`} &lt;/div&gt;
-                        </div>
-                    </div>
-                    <div>
-                        <p className="text-green-600 font-mono text-sm mb-1">// Secure Code</p>
-                        <div className="bg-green-50 p-3 rounded border border-green-200 font-mono text-sm">
-                            {/* React does this automatically usually */}
-                            &lt;div&gt; You searched for: {`{escapeHTML(user_input)}`} &lt;/div&gt;
-                        </div>
-                    </div>
-                </div>
-            )
-        },
-        3: {
-            title: "Broken Authentication (OTP Bypass)",
-            severity: "Critical",
-            whatHappened: "You bypassed the 2-Factor Authentication by lying to the browser.",
-            explanation: "The application asked the server 'Is this code correct?'. The server said 'No'. You caught that message and changed it to 'Yes'. The browser believed you and let you reset the password.",
-            technical: (
-                <div className="space-y-4">
-                    <div>
-                        <p className="text-red-600 font-mono text-sm mb-1">// Vulnerable Logic (Frontend Trust)</p>
-                        <div className="bg-red-50 p-3 rounded border border-red-200 font-mono text-sm">
-                            if (response.success == true) &#123; <br />
-                            &nbsp;&nbsp; showResetScreen(); <br />
-                            &#125;
-                        </div>
-                    </div>
-                    <div>
-                        <p className="text-green-600 font-mono text-sm mb-1">// Secure Logic (Server State)</p>
-                        <div className="bg-green-50 p-3 rounded border border-green-200 font-mono text-sm">
-                            // Backend checks verify status internally <br />
-                            if (session.isVerified == true) &#123; <br />
-                            &nbsp;&nbsp; allowPasswordReset(); <br />
-                            &#125;
-                        </div>
-                    </div>
-                </div>
-            )
-        },
-        4: {
-            title: "Security Misconfiguration",
-            severity: "Medium",
-            whatHappened: "You found a secret 'Debug' page that developers forgot to hide.",
-            explanation: "Developers often leave 'backdoors' or debug tools open for testing. They forget to turn them off before releasing the website. You used a scanner to guess common names until you found one.",
-            technical: (
-                <div className="space-y-4">
-                    <div>
-                        <p className="text-red-600 font-mono text-sm mb-1">// Vulnerable Config</p>
-                        <div className="bg-red-50 p-3 rounded border border-red-200 font-mono text-sm">
-                            app.get('/api/admin/debug', ...) <br />
-                            // No authentication check!
-                        </div>
-                    </div>
-                    <div>
-                        <p className="text-green-600 font-mono text-sm mb-1">// Secure Config</p>
-                        <div className="bg-green-50 p-3 rounded border border-green-200 font-mono text-sm">
-                            // 1. Remove in production <br />
-                            // 2. Add Authentication <br />
-                            if (!user.isAdmin) return 403;
-                        </div>
-                    </div>
-                </div>
-            )
-        },
-        5: {
-            title: "Broken Access Control (IDOR)",
-            severity: "Critical",
-            whatHappened: "You exploited an 'Inconsistent Authorization' vulnerability to steal highly confidential corporate data.",
-            explanation: "The 'Front Door' (the main document viewer) was properly secured. However, developers forgot to secure the 'Backdoor' (the data export API). By changing the user ID to the CEO's ID in the export request, the server blindly packed up their private data—including the $500M TechNova acquisition plans—and handed it to you.",
-            technical: (
-                <div className="space-y-4">
-                    <div className="bg-red-50 p-4 border border-red-200 rounded text-red-900 text-sm shadow-sm">
-                        <strong className="flex items-center gap-2 mb-3 text-red-800 text-base">
-                            <AlertTriangle className="w-5 h-5" /> Real World Business Impact
-                        </strong>
-                        <ul className="list-disc pl-5 space-y-2">
-                            <li><strong>Insider Trading:</strong> Malicious actors could buy or short TechNova stock before the public announcement, committing severe financial crimes.</li>
-                            <li><strong>Deal Collapse:</strong> A $500M M&A (Mergers & Acquisitions) deal could fall through entirely if confidentiality is breached early.</li>
-                            <li><strong>Regulatory Fines:</strong> Severe regulatory penalties from entities like the SEC (Securities and Exchange Commission).</li>
-                            <li><strong>Reputation Destruction:</strong> Complete loss of shareholder and board trust in the security posture of the company.</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <p className="text-green-600 font-mono text-sm mb-1 mt-4">// Secure Code (The Fix)</p>
-                        <div className="bg-green-50 p-3 rounded border border-green-200 font-mono text-sm">
-                            app.get('/api/export', (req, res) =&gt; &#123; <br />
-                            &nbsp;&nbsp;// ALWAYS verify authorization consistently<br />
-                            &nbsp;&nbsp;if (parseInt(req.query.user_id) !== current_user_id) return 403;<br />
-                            &#125;)
-                        </div>
-                    </div>
-                </div>
-            )
-        },
-        6: {
-            title: "Cryptographic Failures",
-            severity: "Critical",
-            whatHappened: "You cracked the administrator's password by exploiting three cryptographic mistakes: an exposed database backup containing password hashes, a hardcoded salt leaked in client-side JavaScript, and the use of MD5 — a broken hashing algorithm.",
-            explanation: "The IT Operations Portal had a 'Run System Backup' feature that returned a full database backup, including password hashes, to any logged-in user — even a junior admin who should never have access to credential data. The application also loaded a JavaScript configuration file from the server that contained the hashing salt ('CyberRange2024!') and algorithm ('MD5') in plain text. Since all JavaScript code that runs in the browser is visible to anyone using DevTools, this was essentially handing the keys to the attacker. You then wrote a dictionary attack script that hashed common passwords with the discovered salt using MD5, and compared each result to the admin's hash until you found a match. The password 'shadow' — a word found in virtually every common password list — cracked in milliseconds because MD5 is designed for speed, not security.",
-            technical: (
-                <div className="space-y-4">
-                    <div className="bg-red-50 p-4 border border-red-200 rounded text-red-900 text-sm shadow-sm">
-                        <strong className="flex items-center gap-2 mb-3 text-red-800 text-base">
-                            <AlertTriangle className="w-5 h-5" /> Real-World Impact
-                        </strong>
-                        <ul className="list-disc pl-5 space-y-2">
-                            <li><strong>LinkedIn (2012):</strong> 6.5 million SHA1 password hashes were leaked. Over 90% were cracked within hours because SHA1, like MD5, is too fast for password storage.</li>
-                            <li><strong>Adobe (2013):</strong> 153 million user accounts were exposed. Passwords were encrypted (not hashed) with a single key, allowing mass decryption.</li>
-                            <li><strong>RockYou (2009):</strong> 32 million passwords were stored in plain text. This leaked database (rockyou.txt) is now the most widely used wordlist for password cracking.</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <p className="text-red-600 font-mono text-sm mb-1">// Vulnerable Code (What this app did)</p>
-                        <div className="bg-red-50 p-3 rounded border border-red-200 font-mono text-sm">
-                            const hash = md5(password + "CyberRange2024!"); <br />
-                            // MD5 is broken — billions of hashes/sec on a GPU <br />
-                            // Salt hardcoded in client-side JavaScript <br />
-                            // Same salt used for ALL users
-                        </div>
-                    </div>
-                    <div>
-                        <p className="text-green-600 font-mono text-sm mb-1">// Secure Code (The Fix)</p>
-                        <div className="bg-green-50 p-3 rounded border border-green-200 font-mono text-sm">
-                            const salt = crypto.randomBytes(16); <br />
-                            // Unique random salt per user <br />
-                            const hash = bcrypt.hashSync(password, 12); <br />
-                            // bcrypt is intentionally slow — resistant to brute force <br />
-                            // Salt is generated server-side, never exposed to the client
-                        </div>
-                    </div>
-                </div>
-            )
-        }
-    };
+    const { user } = useAuth();
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const data = reportData[labId];
+    useEffect(() => {
+        const fetchReport = async () => {
+            if (!user) {
+                setLoading(false);
+                setError("You must be logged in to view reports.");
+                return;
+            }
+            try {
+                const res = await axios.get(`/api/reports/${labId}?user_id=${user.id}`);
 
+                // Construct the technical JSX from the backend's JSON array
+                const backendReport = res.data.report;
+                const jsxTechnical = (
+                    <div className="space-y-4">
+                        {backendReport.technical.map((techData, index) => (
+                            <div key={index}>
+                                <p className={`font-mono text-sm mb-1 ${techData.type === 'vulnerable' ? 'text-red-600' : 'text-green-600'}`}>
+                                    // {techData.type === 'vulnerable' ? 'Vulnerable Code' : 'Secure Code'}
+                                </p>
+                                <div className={`p-3 rounded border font-mono text-sm ${techData.type === 'vulnerable' ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+                                    <pre className="whitespace-pre-wrap">{techData.code}</pre>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                );
+
+                setData({
+                    ...backendReport,
+                    technical: jsxTechnical
+                });
+                setLoading(false);
+            } catch (err) {
+                setError(err.response?.data?.error || "Error fetching report");
+                setLoading(false);
+            }
+        };
+        fetchReport();
+    }, [labId, user]);
+
+    if (loading) return <div className="p-8">Loading report...</div>;
+    if (error) return <div className="p-8 text-red-600 font-bold bg-red-50 border border-red-200 rounded m-8">{error}</div>;
     if (!data) return <div className="p-8">Report not found.</div>;
 
     return (

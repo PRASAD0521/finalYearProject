@@ -1,4 +1,5 @@
 import { createContext, useState, useContext, useEffect } from 'react';
+import axios from 'axios';
 import { useAuth } from './AuthContext';
 
 const ProgressContext = createContext(null);
@@ -18,27 +19,47 @@ export const ProgressProvider = ({ children }) => {
 
     const [progress, setProgress] = useState(defaultProgress);
 
-    useEffect(() => {
-        if (user?.username) {
-            const storedProgress = localStorage.getItem(`lab_progress_${user.username}`);
-            if (storedProgress) {
-                setProgress(JSON.parse(storedProgress));
-            } else {
-                setProgress(defaultProgress); // New user has no progress
+    const fetchProgress = async () => {
+        if (!user || (!user.id && !user.username)) return;
+
+        // Use ID if available (Platform DB), fallback to username for older mock logic
+        const identifier = user.id || user.username;
+
+        try {
+            const res = await axios.get(`/api/progress/${identifier}`);
+            if (res.data.success && res.data.completed) {
+                const newProgress = { ...defaultProgress };
+                res.data.completed.forEach(labId => {
+                    newProgress[labId] = true;
+                });
+                setProgress(newProgress);
             }
+        } catch (err) {
+            console.error("Failed to fetch progress", err);
+        }
+    };
+
+    useEffect(() => {
+        if (user) {
+            fetchProgress();
         } else {
             setProgress(defaultProgress); // Clear progress when logged out
         }
     }, [user]);
 
-    const markLabComplete = (labId) => {
-        setProgress(prev => {
-            const newProgress = { ...prev, [labId]: true };
-            if (user?.username) {
-                localStorage.setItem(`lab_progress_${user.username}`, JSON.stringify(newProgress));
+    const markLabComplete = async (labId) => {
+        // Attempt to mark on server (this is mainly for frontend-only exploits or legacy reasons)
+        // Ideally, the backend marks it itself during the exploit API call
+        if (user && user.id) {
+            try {
+                await axios.post('/api/progress/complete', { user_id: user.id, lab_id: labId });
+            } catch (err) {
+                console.error("Failed to sync progress", err);
             }
-            return newProgress;
-        });
+        }
+
+        // Optimistically update UI
+        setProgress(prev => ({ ...prev, [labId]: true }));
     };
 
     const getStats = () => {

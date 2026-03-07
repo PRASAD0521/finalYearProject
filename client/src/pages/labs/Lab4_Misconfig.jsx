@@ -4,9 +4,11 @@ import { Link } from 'react-router-dom';
 import { Server, AlertTriangle, Terminal, Play, Loader, ShieldAlert } from 'lucide-react';
 import LabBriefing from '../../components/LabBriefing';
 import { useProgress } from '../../context/ProgressContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Lab4_Misconfig() {
     const { markLabComplete } = useProgress();
+    const { user } = useAuth();
     const [debugData, setDebugData] = useState(null);
     const [logs, setLogs] = useState([]);
     const [isScanning, setIsScanning] = useState(false);
@@ -50,7 +52,8 @@ export default function Lab4_Misconfig() {
 
             if (endpoint.vulnerable) {
                 try {
-                    const res = await axios.get(`${endpoint.path}`);
+                    const userParams = progress[4] ? '' : `?user_id=${user?.id || ''}`;
+                    const res = await axios.get(`${endpoint.path}${userParams}`);
                     setLogs(prev => [...prev, { type: 'success', message: `FOUND: ${endpoint.path} [${res.status} OK] - EXPOSED EVENT DETECTED!` }]);
                     setDebugData(res.data);
                     markLabComplete(4); // Mark Lab 4 as complete

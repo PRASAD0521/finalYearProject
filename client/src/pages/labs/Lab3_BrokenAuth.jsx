@@ -4,9 +4,11 @@ import { Link } from 'react-router-dom';
 import { Lock, Key, Wifi, Radio, ArrowRight, Play, Pause, Edit, Check } from 'lucide-react';
 import LabBriefing from '../../components/LabBriefing';
 import { useProgress } from '../../context/ProgressContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Lab3_BrokenAuth() {
     const { markLabComplete } = useProgress();
+    const { user } = useAuth();
 
     // Flow State: 'IDENTIFY' -> 'OTP' -> 'RESET'
     const [step, setStep] = useState('IDENTIFY');
@@ -93,7 +95,8 @@ export default function Lab3_BrokenAuth() {
             // Modular route
             const res = await axios.post('/api/labs/lab3-brokenauth/reset-password', {
                 username: 'admin',
-                newPassword: newPassword
+                newPassword: newPassword,
+                user_id: user?.id
             });
 
             if (res.data.success) {

@@ -16,6 +16,14 @@ function initPlatformDB() {
             isAdmin INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
+
+        platformDB.run(`CREATE TABLE IF NOT EXISTS completed_labs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            lab_id INTEGER,
+            completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, lab_id)
+        )`);
     });
 }
 

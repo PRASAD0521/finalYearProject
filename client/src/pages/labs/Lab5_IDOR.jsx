@@ -57,13 +57,16 @@ export default function Lab5_IDOR() {
     const [flagError, setFlagError] = useState('');
     const [showHintsMenu, setShowHintsMenu] = useState(false);
 
-    const submitFlag = () => {
+    const submitFlag = async () => {
         setFlagError('');
-        if (flagInput.trim() === 'FLAG{idor_api_bypass_77}') {
-            setFlagCaptured(true);
-            markLabComplete(5);
-        } else {
-            setFlagError('Incorrect Flag. Check the raw JSON response from your API exploit.');
+        try {
+            const res = await axios.post('/api/labs/lab5-idor/verify', { flag: flagInput.trim() });
+            if (res.data.success) {
+                setFlagCaptured(true);
+                markLabComplete(5);
+            }
+        } catch (err) {
+            setFlagError(err.response?.data?.error || 'Incorrect Flag. Check the raw JSON response from your API exploit.');
         }
     };
 

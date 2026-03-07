@@ -14,8 +14,6 @@ const HINT_2_DELAY = 30 * 60 * 1000;   // 30 minutes
 const HINT_3_DELAY = 60 * 60 * 1000;   // 60 minutes
 const HINT_4_DELAY = 90 * 60 * 1000;   // 90 minutes
 
-const CORRECT_FLAG = 'FLAG{cr4ck3d_w34k_h4sh_88}';
-
 export default function Lab6_Crypto() {
 
     // --- LAB STATE ---
@@ -136,13 +134,16 @@ export default function Lab6_Crypto() {
     };
 
     // Flag submission
-    const submitFlag = () => {
+    const submitFlag = async () => {
         setFlagError('');
-        if (flagInput.trim() === CORRECT_FLAG) {
-            setFlagCaptured(true);
-            markLabComplete(6);
-        } else {
-            setFlagError('Incorrect flag. Keep cracking!');
+        try {
+            const res = await axios.post('/api/labs/lab6-crypto/verify', { flag: flagInput.trim() });
+            if (res.data.success) {
+                setFlagCaptured(true);
+                markLabComplete(6);
+            }
+        } catch (err) {
+            setFlagError(err.response?.data?.error || 'Incorrect flag. Keep cracking!');
         }
     };
 

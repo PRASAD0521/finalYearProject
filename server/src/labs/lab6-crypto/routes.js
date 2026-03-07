@@ -156,4 +156,24 @@ router.post('/admin/login', (req, res) => {
     );
 });
 
+// POST /api/labs/lab6-crypto/verify
+// Secure flag validation endpoint
+router.post('/verify', (req, res) => {
+    const { flag } = req.body;
+
+    playgroundDB.get(
+        "SELECT * FROM pg_flags WHERE challenge_id = 'LAB6_CRYPTO' AND flag_code = ?",
+        [flag],
+        (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            if (row || flag === 'FLAG{cr4ck3d_w34k_h4sh_88}') {
+                res.json({ success: true, message: 'Flag verified successfully!' });
+            } else {
+                res.status(400).json({ success: false, error: 'Incorrect flag. Keep cracking!' });
+            }
+        }
+    );
+});
+
 module.exports = router;

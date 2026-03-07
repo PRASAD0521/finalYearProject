@@ -102,4 +102,24 @@ router.get('/export', (req, res) => {
     });
 });
 
+// POST /api/labs/lab5-idor/verify
+// Secure flag validation endpoint
+router.post('/verify', (req, res) => {
+    const { flag } = req.body;
+
+    playgroundDB.get(
+        "SELECT * FROM pg_flags WHERE challenge_id = 'LAB5_IDOR' AND flag_code = ?",
+        [flag],
+        (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            if (row || flag === 'FLAG{idor_api_bypass_77}') {
+                res.json({ success: true, message: 'Flag verified successfully!' });
+            } else {
+                res.status(400).json({ success: false, error: 'Incorrect flag. Try accessing different documents or API endpoints.' });
+            }
+        }
+    );
+});
+
 module.exports = router;

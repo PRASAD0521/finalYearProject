@@ -16,6 +16,7 @@ import Lab4 from './pages/labs/Lab4_Misconfig';
 import Lab5 from './pages/labs/Lab5_IDOR';
 import Lab6 from './pages/labs/Lab6_Crypto';
 import LabReport from './pages/LabReport';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 // Playground Pages
 import PlaygroundHome from './pages/playground/PlaygroundHome';
@@ -30,6 +31,15 @@ const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" />;
+  return children;
+};
+
+// Admin Route Guard
+const AdminRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
+  if (!user.isAdmin) return <Navigate to="/dashboard" />;
   return children;
 };
 
@@ -56,6 +66,7 @@ export default function App() {
               <Route path="/simulation/lab-05" element={<Lab5 />} />
               <Route path="/simulation/lab-06" element={<Lab6 />} />
               <Route path="/lab-report/:id" element={<LabReport />} />
+              <Route path="admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             </Route>
 
             {/* Playground — Standalone Layout (opens in new tab) */}

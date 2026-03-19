@@ -32,6 +32,14 @@ function initPlatformDB() {
             started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(user_id, lab_id)
         )`);
+
+        // Seed default admin account
+        platformDB.get("SELECT count(*) as count FROM users WHERE username = 'admin'", (err, row) => {
+            if (row && row.count === 0) {
+                console.log("[Platform DB] Seeding default Admin account...");
+                platformDB.run(`INSERT INTO users (username, password, isAdmin) VALUES ('admin', 'admin123', 1)`);
+            }
+        });
     });
 }
 
@@ -259,4 +267,4 @@ function initPlaygroundDB() {
     });
 }
 
-module.exports = { initDatabases };
+module.exports = { initDatabases, initLabsDB, initPlaygroundDB };

@@ -82,6 +82,10 @@ app.use('/api', progressRoutes);
 const hintsRoutes = require('./routes/hints');
 app.use('/api/hints', hintsRoutes);
 
+// 6. Secure Admin Utilities
+const adminRoutes = require('./routes/admin');
+app.use('/api/admin', adminRoutes);
+
 app.listen(PORT, () => {
     console.log(`Scalable CyberRange Server running on http://localhost:${PORT}`);
     console.log(`- Platform DB: Secure`);

@@ -174,6 +174,14 @@ export default function Lab6_Crypto() {
                     </span>
                 }
                 objective="Your goal is to gain unauthorized access to the Administrator panel. To do this, you will need to: (1) find the leaked password hashes, (2) discover the hashing algorithm and salt being used, (3) write a script to perform a dictionary attack and crack the admin password, and (4) log in with the cracked credentials to capture the flag."
+                owasp={{ id: "A02:2021", name: "Cryptographic Failures" }}
+                cvss={{ score: 7.4, severity: "High", vector: "Network", privileges: "Low", impact: "High" }}
+                hints={[
+                    "First, click 'Run System Backup'. This will download a JSON file containing the backup database dump.",
+                    "Look inside the JSON file. You will see the admin's password hash. Unfortunately, you can't reverse a hash without knowing the algorithm and the salt.",
+                    "Open Developer Tools (F12) -> Network tab. Refresh the page. Look for a leaked javascript file (like config.js) that exposes the weak algorithm and the hardcoded salt.",
+                    "Once you know the salt ('CyberRange2024!') and algorithm (md5), you can write a simple Python or NodeJS script to hash a dictionary of common passwords until you find the exact match!"
+                ]}
             />
 
             <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">

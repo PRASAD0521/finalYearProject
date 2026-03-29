@@ -1,0 +1,123 @@
+const express = require('express');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { reportData } = require('./progress');
+const { platformDB } = require('../database/connection');
+require('dotenv').config();
+
+const router = express.Router();
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+router.post('/', async (req, res) => {
+    try {
+        const { messages, labId, contextType, labTitle, scenario, objective, userId } = req.body;
+
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
+            return res.status(400).json({ error: "Messages array is required." });
+        }
+
+        const labContext = reportData[labId] || { title: "Unknown Lab", owasp: "Unknown", whatHappened: "Unknown", explanation: "Unknown" };
+
+        let systemInstruction = "";
+
+        if (contextType === "in-lab") {
+            systemInstruction = `You are a strict Socratic CyberRange Security Tutor embedded physically inside a vulnerable lab session.
+The student is currently attempting Lab ${labId}: ${labTitle || labContext.title}.
+
+LAB CONTEXT:
+Scenario: ${scenario || "General Security Lab"}
+Objective: ${objective || "Find and exploit the vulnerability peacefully."}
+
+RULES:
+1. Use the Socratic Method. Do NOT give away the exact answer, direct commands, or explicit payloads.
+2. Provide hints, mental models, and conceptual guidance strictly based on the Lab Context provided above.
+3. You MUST output your response strictly as a JSON object matching this exact schema:
+{
+  "reply": "string (your hint heavily formatted in markdown)",
+  "revelation_score": number (0-100)
+}
+4. 'revelation_score' must be an integer from 0 to 100 representing how explicitly you revealed the answer. (e.g., 0 = basic encouragement, 30 = pointing out suspicious behavior, 70 = giving aggressive pseudo-code, 100 = explicit solution).
+5. Output pure JSON without backticks or markdown code block formatting around the overall JSON body.`;
+        } else {
+            systemInstruction = `You are a helpful, expert AI Security Tutor for the CyberRange educational platform.
+The student has just completed Lab ${labId}: ${labContext.title}.
+Vulnerability Details: ${labContext.owasp}
+Root Cause: ${labContext.whatHappened}
+Technical Explanation: ${labContext.explanation}
+
+RULES:
+1. You must STRICTLY answer ONLY questions related to cybersecurity, this specific lab, the vulnerabilities found, or remediation strategies.
+2. If the user asks about anything unrelated to cybersecurity (e.g., cooking, programming help unrelated to security, general knowledge, roleplay), politely decline and remind them you are a CyberRange Security Tutor.
+3. Be concise, educational, and professional. Use markdown formatting when providing code examples.
+4. Support the student's learning by guiding them towards the remediation principles.
+5. Do not provide exact flags or bypass answers; help them understand the 'why'.`;
+        }
+        console.log(systemInstruction);
+        // Initialize model with system instructions and JSON generation config if applicable
+        const modelConfig = {
+            model: "gemini-2.5-flash",
+            systemInstruction: systemInstruction
+        };
+
+        if (contextType === "in-lab") {
+            modelConfig.generationConfig = { responseMimeType: "application/json" };
+        }
+
+        const model = genAI.getGenerativeModel(modelConfig);
+
+        // Format history for Gemini chat
+        let formattedHistory = messages.slice(0, -1).map(msg => ({
+            role: msg.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: msg.content }]
+        }));
+
+        // The Gemini SDK strictly requires chat history to begin with a 'user' message.
+        while (formattedHistory.length > 0 && formattedHistory[0].role === 'model') {
+            formattedHistory.shift();
+        }
+
+        const currentMessage = messages[messages.length - 1].content;
+
+        const chat = model.startChat({
+            history: formattedHistory,
+        });
+
+        // Generate response
+        const result = await chat.sendMessage(currentMessage);
+        const rawResponse = result.response.text();
+
+        let reply = rawResponse;
+        console.log(reply)
+        let revelationScore = 0;
+
+        if (contextType === "in-lab") {
+            try {
+                const parsed = JSON.parse(rawResponse);
+                reply = parsed.reply || "I encountered an error formatting my response.";
+                revelationScore = parsed.revelation_score || 0;
+            } catch (e) {
+                console.error("Failed to parse JSON from Gemini", rawResponse);
+                reply = rawResponse; // Fallback
+            }
+        }
+
+        // Active LLM Cost Auditing
+        const reqTokens = Math.ceil(currentMessage.length / 4);
+        const resTokens = Math.ceil(reply.length / 4);
+        const totalTokens = reqTokens + resTokens;
+
+        if (userId) {
+            const column = contextType === "in-lab" ? 'inlab_tokens_used' : 'postlab_tokens_used';
+            platformDB.run(`UPDATE users SET ${column} = ${column} + ? WHERE id = ?`, [totalTokens, userId], (err) => {
+                if (err) console.error("Database Token Sync Failed:", err);
+            });
+        }
+
+        res.json({ reply, revelationScore, tokens: totalTokens });
+    } catch (error) {
+        console.error("Gemini API Error:", error);
+        res.status(500).json({ error: "Failed to communicate with AI Tutor. Ensure API keys are valid and rate limits are preserved." });
+    }
+});
+
+module.exports = router;

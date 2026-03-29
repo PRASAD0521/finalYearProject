@@ -74,9 +74,17 @@ app.post('/api/login', (req, res) => {
 // Auto-loads /api/labs/lab1-sqli, etc.
 registerLabs(app);
 
+// 3.5 Internal Network API (For Lab 7 SSRF)
+const internalRoutes = require('./routes/internal');
+app.use('/api/internal', internalRoutes);
+
 // 4. Progress Tracking & Reports
-const progressRoutes = require('./routes/progress');
+const { router: progressRoutes } = require('./routes/progress');
 app.use('/api', progressRoutes);
+
+// 4.5 AI Chatbot (Gemini)
+const chatRoutes = require('./routes/chat');
+app.use('/api/chat', chatRoutes);
 
 // 5. Secure Time-Gated Hints
 const hintsRoutes = require('./routes/hints');

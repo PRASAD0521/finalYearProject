@@ -1,4 +1,4 @@
-import { Server, Database, Lock, Globe, Key } from 'lucide-react';
+import { Server, Database, Lock, Globe, Key, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const labs = [
@@ -55,6 +55,42 @@ const labs = [
         category: 'Crypto',
         icon: Key,
         path: '/simulation/lab-06'
+    },
+    {
+        id: 'lab-07',
+        title: 'Server-Side Request Forgery',
+        description: 'Exploit a URL fetcher in an e-KYC Gov Portal to bypass firewalls and steal internal infrastructure tokens.',
+        difficulty: 'Medium',
+        category: 'SSRF',
+        icon: Globe,
+        path: '/simulation/lab-07'
+    },
+    {
+        id: 'lab-08',
+        title: 'Race Condition (TOCTOU)',
+        description: 'Exploit asynchronous timing windows and database locks to duplicate high-value transactions and drain a portal.',
+        difficulty: 'Hard',
+        category: 'Business Logic',
+        icon: Database,
+        path: '/simulation/lab-08'
+    },
+    {
+        id: 'lab-09',
+        title: 'Rate Limit Evasion (WAF Bypass)',
+        description: 'Bypass a strict Web Application Firewall IP ban by forging proxy headers to brute force a PIN.',
+        difficulty: 'Hard',
+        category: 'Authentication',
+        icon: Globe,
+        path: '/simulation/lab-09'
+    },
+    {
+        id: 'lab-10',
+        title: 'Man-in-the-Middle (MITM) XOR Crypto',
+        description: 'Intercept an encrypted network stream, mathematically crack the symmetric key, and forge a malicious packet payload.',
+        difficulty: 'Expert',
+        category: 'Cryptography',
+        icon: ShieldAlert,
+        path: '/simulation/lab-10'
     }
 ];
 

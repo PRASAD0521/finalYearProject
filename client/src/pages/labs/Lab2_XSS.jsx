@@ -46,6 +46,14 @@ export default function Lab2_XSS() {
                     </span>
                 }
                 objective="Inject a JavaScript payload that triggers a browser alert popup (alert(1))."
+                owasp={{ id: "A03:2021", name: "Injection" }}
+                cvss={{ score: 8.8, severity: "High", vector: "Network", privileges: "None", impact: "High" }}
+                hints={[
+                    "When you type a standard word and press search, where exactly does that word appear on the screen?",
+                    "If the application just pastes your text directly into the DOM, what happens if your text IS HTML?",
+                    "Try wrapping your search term in basic HTML tags, like <h1>test</h1>. Does the text get bigger? If so, you have HTML Injection.",
+                    "If HTML works, JavaScript (XSS) will work. Try an active payload like: <script>alert(1)</script> or <img src=x onerror=alert(1)>"
+                ]}
             />
             <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
                 <div className="bg-slate-800 p-6 flex justify-between items-center text-white">

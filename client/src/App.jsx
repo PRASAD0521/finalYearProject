@@ -15,6 +15,10 @@ import Lab3 from './pages/labs/Lab3_BrokenAuth';
 import Lab4 from './pages/labs/Lab4_Misconfig';
 import Lab5 from './pages/labs/Lab5_IDOR';
 import Lab6 from './pages/labs/Lab6_Crypto';
+import Lab7_SSRF from './pages/labs/Lab7_SSRF';
+import Lab8_Race from './pages/labs/Lab8_Race';
+import Lab9_WAF from './pages/labs/Lab9_WAF';
+import Lab10_MITM from './pages/labs/Lab10_MITM';
 import LabReport from './pages/LabReport';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
@@ -65,6 +69,10 @@ export default function App() {
               <Route path="/simulation/lab-04" element={<Lab4 />} />
               <Route path="/simulation/lab-05" element={<Lab5 />} />
               <Route path="/simulation/lab-06" element={<Lab6 />} />
+              <Route path="/simulation/lab-07" element={<Lab7_SSRF />} />
+              <Route path="/simulation/lab-08" element={<Lab8_Race />} />
+              <Route path="/simulation/lab-09" element={<Lab9_WAF />} />
+              <Route path="/simulation/lab-10" element={<Lab10_MITM />} />
               <Route path="/lab-report/:id" element={<LabReport />} />
               <Route path="admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             </Route>

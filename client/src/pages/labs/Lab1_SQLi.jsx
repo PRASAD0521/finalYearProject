@@ -54,6 +54,14 @@ export default function Lab1_SQLi() {
                     </span>
                 }
                 objective="Bypass the login screen and gain Admin access without knowing the password."
+                owasp={{ id: "A03:2021", name: "Injection" }}
+                cvss={{ score: 9.8, severity: "Critical", vector: "Network", privileges: "None", impact: "High" }}
+                hints={[
+                    "SQL queries use single quotes (') to define strings. What happens if you inject your own single quote?",
+                    "The backend query looks like: SELECT * FROM users WHERE username = '[YOUR_INPUT]'",
+                    "Try injecting boolean logic that is always true, such as OR 1=1",
+                    "Don't forget to comment out the rest of the query! In SQLite, a comment is --."
+                ]}
             />
             <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
                 <div className="bg-slate-800 p-6 flex justify-between items-center text-white">

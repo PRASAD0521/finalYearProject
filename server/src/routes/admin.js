@@ -34,25 +34,37 @@ router.use(requireAdmin);
 // GET /api/admin/stats
 // Returns macro telemetry for the dashboard overview
 router.get('/stats', (req, res) => {
-    // Run multiple queries in parallel
-    const getActiveStudents = new Promise((resolve) => {
-        platformDB.get('SELECT COUNT(*) AS count FROM users WHERE isAdmin = 0', (err, row) => {
-            resolve(row ? row.count : 0);
-        });
-    });
+    const queries = {
+        activeStudents: new Promise((resolve) => {
+            platformDB.get('SELECT COUNT(*) AS count FROM users WHERE isAdmin = 0', (err, row) => resolve(row ? row.count : 0));
+        }),
+        globalCompletions: new Promise((resolve) => {
+            platformDB.get('SELECT COUNT(*) AS count FROM completed_labs', (err, row) => resolve(row ? row.count : 0));
+        }),
+        avgScore: new Promise((resolve) => {
+            platformDB.get('SELECT ROUND(AVG(final_score), 0) AS avg FROM completed_labs WHERE final_score > 0', (err, row) => resolve(row ? row.avg : 0));
+        }),
+        totalInlabTokens: new Promise((resolve) => {
+            platformDB.get('SELECT SUM(inlab_tokens_used) AS total FROM users WHERE isAdmin = 0', (err, row) => resolve(row ? row.total || 0 : 0));
+        }),
+        totalPostlabTokens: new Promise((resolve) => {
+            platformDB.get('SELECT SUM(postlab_tokens_used) AS total FROM users WHERE isAdmin = 0', (err, row) => resolve(row ? row.total || 0 : 0));
+        }),
+        hardestLab: new Promise((resolve) => {
+            platformDB.get('SELECT lab_id, ROUND(AVG(final_score), 0) AS avg_score FROM completed_labs GROUP BY lab_id ORDER BY avg_score ASC LIMIT 1', (err, row) => resolve(row || null));
+        })
+    };
 
-    const getGlobalCompletions = new Promise((resolve) => {
-        platformDB.get('SELECT COUNT(*) AS count FROM completed_labs', (err, row) => {
-            resolve(row ? row.count : 0);
-        });
-    });
-
-    Promise.all([getActiveStudents, getGlobalCompletions])
-        .then(([activeStudents, globalCompletions]) => {
+    Promise.all(Object.values(queries))
+        .then(([activeStudents, globalCompletions, avgScore, totalInlabTokens, totalPostlabTokens, hardestLab]) => {
             res.json({
                 success: true,
                 active_students: activeStudents,
                 global_completions: globalCompletions,
+                avg_platform_score: avgScore,
+                total_inlab_tokens: totalInlabTokens,
+                total_postlab_tokens: totalPostlabTokens,
+                hardest_lab: hardestLab,
                 status: 'Healthy'
             });
         })
@@ -60,19 +72,25 @@ router.get('/stats', (req, res) => {
 });
 
 // GET /api/admin/users
-// Returns a list of all non-admin users and their completion statistics
+// Returns a ranked leaderboard of all non-admin users with full telemetry
 router.get('/users', (req, res) => {
     const query = `
         SELECT 
             u.id, 
             u.username, 
             u.created_at,
-            COUNT(cl.lab_id) as completed_count
+            u.inlab_tokens_used,
+            u.postlab_tokens_used,
+            COUNT(cl.lab_id) AS completed_count,
+            COALESCE(SUM(cl.final_score), 0) AS total_score,
+            COALESCE(SUM(cl.time_taken_seconds), 0) AS total_time,
+            COALESCE(SUM(cl.hints_used), 0) AS total_hints,
+            COALESCE(SUM(cl.revelation_score), 0) AS total_revelation
         FROM users u
         LEFT JOIN completed_labs cl ON u.id = cl.user_id
         WHERE u.isAdmin = 0
         GROUP BY u.id
-        ORDER BY completed_count DESC, u.created_at ASC
+        ORDER BY total_score DESC, completed_count DESC
     `;
 
     platformDB.all(query, [], (err, rows) => {

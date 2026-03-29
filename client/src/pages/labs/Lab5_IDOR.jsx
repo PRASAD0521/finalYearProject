@@ -164,6 +164,14 @@ export default function Lab5_IDOR() {
                     </span>
                 }
                 objective="Find a way to bypass the UI restrictions and access documents belonging to other users, specifically targeting the CEO's classified files."
+                owasp={{ id: "A01:2021", name: "Broken Access Control" }}
+                cvss={{ score: 8.5, severity: "High", vector: "Network", privileges: "Low", impact: "High" }}
+                hints={[
+                    "The front door (viewing documents in the UI) is perfectly locked. But what about the 'Export' feature?",
+                    "Click the 'Export My Data Archive' button. Does it download a file?",
+                    "Open Developer Tools (F12) -> Network Tab. Click Export again. Look closely at the API request URL.",
+                    "The URL likely says `?user_id=...`. What happens if you copy that exact URL into a new tab, but change the ID to something else? Find the hidden FLAG in the leaked JSON!"
+                ]}
             />
 
             <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">

@@ -15,7 +15,11 @@ function initPlatformDB() {
             password TEXT,
             isAdmin INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+        )`, () => {
+            // LLM Token Consumption Migrations
+            platformDB.run(`ALTER TABLE users ADD COLUMN inlab_tokens_used INTEGER DEFAULT 0`, () => {});
+            platformDB.run(`ALTER TABLE users ADD COLUMN postlab_tokens_used INTEGER DEFAULT 0`, () => {});
+        });
 
         platformDB.run(`CREATE TABLE IF NOT EXISTS completed_labs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,7 +27,15 @@ function initPlatformDB() {
             lab_id INTEGER,
             completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(user_id, lab_id)
-        )`);
+        )`, () => {
+            // Safe Migrations for scoring telemetry
+            const telemetrics = ['time_taken_seconds', 'hints_used', 'revelation_score', 'tokens_consumed', 'final_score'];
+            telemetrics.forEach(col => {
+                platformDB.run(`ALTER TABLE completed_labs ADD COLUMN ${col} INTEGER DEFAULT 0`, (err) => {
+                    // Ignore "duplicate column name" errors on nodemon restarts
+                });
+            });
+        });
 
         platformDB.run(`CREATE TABLE IF NOT EXISTS lab_starts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

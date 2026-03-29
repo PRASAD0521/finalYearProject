@@ -83,6 +83,14 @@ export default function Lab4_Misconfig() {
                     </span>
                 }
                 objective="Use the 'Reconnaissance Tool' below to simulate a directory brute-force attack. Find the hidden endpoint that leaks sensitive system information."
+                owasp={{ id: "A05:2021", name: "Security Misconfiguration" }}
+                cvss={{ score: 7.5, severity: "High", vector: "Network", privileges: "None", impact: "High" }}
+                hints={[
+                    "Real hackers don't guess URLs one by one; they use automated tools like DirBuster or Gobuster.",
+                    "The tool exposed below acts as a simplified directory fuzzer. It rapidly checks common development endpoints.",
+                    "Click the 'run_scan.sh' button to start the barrage of requests.",
+                    "Watch the terminal logs carefully. Most will return 401 Unauthorized or 404 Not Found. You are looking for a 200 OK status on a hidden endpoint!"
+                ]}
             />
 
             <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">

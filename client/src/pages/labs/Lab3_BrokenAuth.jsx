@@ -100,7 +100,7 @@ export default function Lab3_BrokenAuth() {
             });
 
             if (res.data.success) {
-                if (username === 'admin') markLabComplete(3);
+                markLabComplete(3);
                 setFeedback({ type: 'success', message: 'Password Reset Successfully! You have hijacked the account.' });
             }
         } catch (err) {
@@ -116,6 +116,14 @@ export default function Lab3_BrokenAuth() {
                 scenario="The application uses a 2-Step Verification (OTP) system. However, the frontend creates a 'trust' decision based on the JSON response from the server."
                 vulnerability={<span>The application trusts the <code>success: false</code> response from the server. If an attacker intercepts this response and changes it to <code>success: true</code>, the frontend believes authentication was successful.</span>}
                 objective="Bypass the OTP check for the 'admin' user by intercepting and modifying the server response."
+                owasp={{ id: "A07:2021", name: "Identification and Authentication Failures" }}
+                cvss={{ score: 9.1, severity: "Critical", vector: "Network", privileges: "None", impact: "High" }}
+                hints={[
+                    "When you submit a wrong OTP, the server replies with a JSON object saying { success: false }.",
+                    "The frontend React application blindly trusts whatever that JSON object says.",
+                    "Turn the Interceptor ON. Submit a fake OTP. The request will pause.",
+                    "Look at the JSON response in the inspector. Change the word 'false' to 'true' and click Forward!"
+                ]}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

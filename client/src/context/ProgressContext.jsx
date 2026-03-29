@@ -14,7 +14,11 @@ export const ProgressProvider = ({ children }) => {
         3: false, // Broken Auth
         4: false, // Misconfiguration
         5: false, // IDOR
-        6: false  // Crypto
+        6: false, // Crypto
+        7: false, // SSRF
+        8: false, // Race Condition
+        9: false, // WAF Bypass
+        10: false // MITM Crypto
     };
 
     const [progress, setProgress] = useState(defaultProgress);
@@ -27,10 +31,11 @@ export const ProgressProvider = ({ children }) => {
 
         try {
             const res = await axios.get(`/api/progress/${identifier}`);
-            if (res.data.success && res.data.completed) {
+            if (res.data.success && res.data.progressMap) {
                 const newProgress = { ...defaultProgress };
-                res.data.completed.forEach(labId => {
-                    newProgress[labId] = true;
+                // Map historical objects directly cleanly
+                Object.keys(res.data.progressMap).forEach(labId => {
+                    newProgress[labId] = res.data.progressMap[labId];
                 });
                 setProgress(newProgress);
             }
@@ -47,24 +52,51 @@ export const ProgressProvider = ({ children }) => {
         }
     }, [user]);
 
-    const markLabComplete = async (labId) => {
-        // Attempt to mark on server (this is mainly for frontend-only exploits or legacy reasons)
-        // Ideally, the backend marks it itself during the exploit API call
+    const markLabComplete = async (labId, metrics = {}) => {
+        let telemetry = { ...metrics };
+        if (typeof window.__getLabTelemetry === 'function') {
+            telemetry = { ...telemetry, ...window.__getLabTelemetry() };
+        }
+        if (typeof window.__getAiTelemetry === 'function') {
+            telemetry = { ...telemetry, ...window.__getAiTelemetry() };
+        }
+        
+        const { timeTaken = 0, hintsUsed = 0, revelationScore = 0, tokensConsumed = 0 } = telemetry;
+        let finalScoreData = null;
+
         if (user && user.id) {
             try {
-                await axios.post('/api/progress/complete', { user_id: user.id, lab_id: labId });
+                const response = await axios.post('/api/progress/complete', { 
+                    user_id: user.id, 
+                    lab_id: labId,
+                    timeTaken,
+                    hintsUsed,
+                    revelationScore,
+                    tokensConsumed
+                });
+                finalScoreData = response.data;
             } catch (err) {
-                console.error("Failed to sync progress", err);
+                console.error("Failed to sync telemetry", err);
             }
         }
 
-        // Optimistically update UI
-        setProgress(prev => ({ ...prev, [labId]: true }));
+        setProgress(prev => ({ 
+            ...prev, 
+            [labId]: { 
+                timeTaken, 
+                hintsUsed, 
+                revelationScore, 
+                tokensConsumed,
+                finalScore: finalScoreData ? finalScoreData.finalScore : 1000
+            } 
+        }));
+        
+        return finalScoreData;
     };
 
     const getStats = () => {
         const total = Object.keys(progress).length;
-        const completed = Object.values(progress).filter(Boolean).length;
+        const completed = Object.values(progress).filter(p => !!p).length;
         const pending = total - completed;
         const score = Math.round((completed / total) * 100);
         return { total, completed, pending, score };

@@ -19,6 +19,7 @@ function registerLabs(app) {
             const mountPath = `/api/labs/${labName}`;
             app.use(mountPath, labRouter);
             console.log(`  -> Registered: ${mountPath}`);
+
         }
     });
 }

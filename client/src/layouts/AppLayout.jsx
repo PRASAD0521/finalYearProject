@@ -1,13 +1,72 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Shield, Book, Layout, User, LogOut, ShoppingCart, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import clsx from 'clsx';
+import axios from 'axios';
 
 export default function AppLayout() {
     const { user, logout } = useAuth();
     const location = useLocation();
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [serverStatus, setServerStatus] = useState('checking'); // 'checking', 'online', 'offline', 'waking'
+
+    // 1. Initial check ONLY
+    useEffect(() => {
+        const doInitialCheck = async () => {
+            try {
+                await axios.get('/api/health', { timeout: 3000 });
+                setServerStatus('online');
+            } catch (err) {
+                setServerStatus('offline');
+            }
+        };
+        doInitialCheck();
+    }, []);
+
+    // 2. Polling logic ONLY when manually waking up
+    useEffect(() => {
+        let interval;
+        if (serverStatus === 'waking') {
+            const pollStatus = async () => {
+                try {
+                    await axios.get('/api/health', { timeout: 3000 });
+                    setServerStatus('online'); // Success, clear interval
+                } catch (err) {
+                    // still waking...
+                }
+            };
+            pollStatus(); // Immediate ping
+            interval = setInterval(pollStatus, 5000); // Check every 5s while waking
+        }
+        
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [serverStatus]);
+
+    const handleWakeUpClick = () => {
+        if (serverStatus === 'offline') {
+            setServerStatus('waking');
+        }
+    };
+
+    // UI Configuration for the Status Dot
+    let dotColor = 'bg-slate-400 animate-pulse';
+    let dotTitle = 'Checking server status...';
+    let cursorStyle = 'cursor-default';
+
+    if (serverStatus === 'online') {
+        dotColor = 'bg-green-500';
+        dotTitle = 'Server Online';
+    } else if (serverStatus === 'offline') {
+        dotColor = 'bg-red-500';
+        dotTitle = 'Server Offline (Click to Wake)';
+        cursorStyle = 'cursor-pointer hover:scale-125';
+    } else if (serverStatus === 'waking') {
+        dotColor = 'bg-yellow-500 animate-pulse shadow-[0_0_10px_rgba(234,179,8,0.5)]';
+        dotTitle = 'Waking Server Up...';
+    }
 
     const navigation = [
         { name: 'Dashboard', href: '/dashboard', icon: Layout },
@@ -28,9 +87,20 @@ export default function AppLayout() {
                 isCollapsed ? "w-20" : "w-64"
             )}>
                 {/* Header */}
-                <div className="p-4 border-b border-slate-700 flex items-center justify-between h-[73px]">
+                <div className="p-4 border-b border-slate-700 flex items-center justify-between h-[73px] relative">
                     <div className={clsx("flex items-center space-x-2 overflow-hidden transition-all duration-300", isCollapsed ? "opacity-0 w-0" : "opacity-100 w-full")}>
-                        <Shield className="w-8 h-8 text-blue-500 shrink-0" />
+                        <div className="relative shrink-0">
+                            <Shield className="w-8 h-8 text-blue-500" />
+                            <div 
+                                onClick={handleWakeUpClick}
+                                className={clsx(
+                                    "absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2 border-slate-900 rounded-full transition-all duration-300",
+                                    dotColor,
+                                    cursorStyle
+                                )} 
+                                title={dotTitle}
+                            />
+                        </div>
                         <div className="shrink-0">
                             <h1 className="text-lg font-bold">CyberRange</h1>
                             <p className="text-xs text-slate-400">Enterprise Training</p>
@@ -38,7 +108,18 @@ export default function AppLayout() {
                     </div>
                     {isCollapsed && (
                         <div className="w-full flex justify-center absolute left-0">
-                            <Shield className="w-8 h-8 text-blue-500" />
+                            <div className="relative">
+                                <Shield className="w-8 h-8 text-blue-500" />
+                                <div 
+                                    onClick={handleWakeUpClick}
+                                    className={clsx(
+                                        "absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2 border-slate-900 rounded-full transition-all duration-300",
+                                        dotColor,
+                                        cursorStyle
+                                    )} 
+                                    title={dotTitle}
+                                />
+                            </div>
                         </div>
                     )}
                 </div>

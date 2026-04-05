@@ -25,7 +25,7 @@ export default function PlaygroundLayout() {
                                 <span className="text-xs text-gray-500">Vulnerable Web Application for Training</span>
                             </div>
                             <p className="text-xs text-gray-400">
-                                &copy; 2026 CyberRange — Educational purposes only.
+                                &copy; 2026 CyberRange.
                             </p>
                         </div>
                     </div>

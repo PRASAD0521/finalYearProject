@@ -79,6 +79,11 @@ export default function PlaygroundScoreboard() {
                 <Trophy className="w-6 h-6 text-yellow-500" />
                 CTF Scoreboard
             </h1>
+            <p className="text-sm text-gray-500 max-w-2xl">
+                CyberStore has intentional vulnerabilities hidden throughout the application.
+                Explore the store, inspect your browser's <strong>Network tab</strong>, and look for <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">flag</code> fields in API responses.
+                Submit flags in the format <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">FLAG{'{'}.{'}'}</code> below.
+            </p>
 
             {/* Stats Card */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">

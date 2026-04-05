@@ -47,21 +47,24 @@ export default function Lab1_SQLi() {
         <div className="max-w-2xl mx-auto">
             <LabBriefing
                 title="SQL Injection (SQLi)"
-                scenario="You are accessing an old legacy portal. The developers built the login query by directly concatenating your input strings into the database command."
-                vulnerability={
+                scenario={
                     <span>
-                        Input is not sanitized. By entering <code>' OR 1=1 --</code>, you can trick the database into evaluating the password check as "True" for every user, allowing you to bypass authentication without a password.
+                        You are attempting to access a legacy corporate portal. The application uses
+                        a backend database to verify your login credentials. However, the developers 
+                        cut corners and passed user input directly into the database query without sanitization.
                     </span>
                 }
-                objective="Bypass the login screen and gain Admin access without knowing the password."
+                vulnerability={
+                    <span>
+                        When user input is directly concatenated into a SQL statement, an attacker can input 
+                        malicious characters (like quotes <code>'</code>) to "break out" of the intended data field 
+                        and inject their own SQL logic. 
+                        If crafted correctly, you can rewrite the query dynamically to evaluate as true, bypassing the password check entirely.
+                    </span>
+                }
+                objective="Craft a malicious username input that breaks the SQL query syntax and forces a successful login, granting you Admin access without knowing the password."
                 owasp={{ id: "A03:2021", name: "Injection" }}
                 cvss={{ score: 9.8, severity: "Critical", vector: "Network", privileges: "None", impact: "High" }}
-                hints={[
-                    "SQL queries use single quotes (') to define strings. What happens if you inject your own single quote?",
-                    "The backend query looks like: SELECT * FROM users WHERE username = '[YOUR_INPUT]'",
-                    "Try injecting boolean logic that is always true, such as OR 1=1",
-                    "Don't forget to comment out the rest of the query! In SQLite, a comment is --."
-                ]}
             />
             <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
                 <div className="bg-slate-800 p-6 flex justify-between items-center text-white">
@@ -75,11 +78,6 @@ export default function Lab1_SQLi() {
                 </div>
 
                 <div className="p-8">
-                    <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 text-sm text-blue-700">
-                        <p><strong>Hint:</strong> The backend query is constructed using string concatenation: <br />
-                            <code className="bg-blue-100 px-1 rounded">"SELECT * FROM users WHERE username = '' AND password = ''</code>
-                        </p>
-                    </div>
 
                     <form onSubmit={handleLogin} className="space-y-6 max-w-md mx-auto border p-6 rounded-md bg-gray-50">
                         <div className="text-center mb-4">

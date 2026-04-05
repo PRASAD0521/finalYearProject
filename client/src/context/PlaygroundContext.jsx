@@ -9,6 +9,11 @@ export function PlaygroundProvider({ children }) {
         return saved ? JSON.parse(saved) : null;
     });
 
+    // JWT Token (for Broken Auth / VIP challenge)
+    const [pgToken, setPgToken] = useState(() => {
+        return localStorage.getItem('pg_token') || null;
+    });
+
     // Cart State
     const [cart, setCart] = useState(() => {
         const saved = localStorage.getItem('pg_cart');
@@ -33,6 +38,14 @@ export function PlaygroundProvider({ children }) {
             localStorage.removeItem('pg_user');
         }
     }, [pgUser]);
+
+    useEffect(() => {
+        if (pgToken) {
+            localStorage.setItem('pg_token', pgToken);
+        } else {
+            localStorage.removeItem('pg_token');
+        }
+    }, [pgToken]);
 
     useEffect(() => {
         localStorage.setItem('pg_solved', JSON.stringify(solvedFlags));
@@ -71,10 +84,21 @@ export function PlaygroundProvider({ children }) {
     const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
 
     // Auth Operations
-    const pgLogin = (user) => setPgUser(user);
+    const pgLogin = (user, token = null) => {
+        setPgUser(user);
+        if (token) setPgToken(token);
+    };
+
     const pgLogout = () => {
         setPgUser(null);
+        setPgToken(null);
         localStorage.removeItem('pg_user');
+        localStorage.removeItem('pg_token');
+    };
+
+    // Update user data in context (e.g. after checkout to refresh balance)
+    const pgUpdateUser = (updatedUser) => {
+        setPgUser(prev => ({ ...prev, ...updatedUser }));
     };
 
     // Flag Operations
@@ -88,8 +112,10 @@ export function PlaygroundProvider({ children }) {
     const value = {
         // Auth
         pgUser,
+        pgToken,
         pgLogin,
         pgLogout,
+        pgUpdateUser,
         // Cart
         cart,
         addToCart,

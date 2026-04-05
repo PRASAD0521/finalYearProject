@@ -133,6 +133,7 @@ export default function CyberStoreNavbar() {
                     <Link to="/playground?category=Accessories" className="hover:text-white transition-colors whitespace-nowrap">Accessories</Link>
                     <Link to="/playground?category=Security" className="hover:text-white transition-colors whitespace-nowrap">Security</Link>
                     <Link to="/playground?category=Apparel" className="hover:text-white transition-colors whitespace-nowrap">Apparel</Link>
+                {/* TODO: link to staff panel — /api/labs/playground/admin/users */}
                 </div>
             </div>
         </nav>

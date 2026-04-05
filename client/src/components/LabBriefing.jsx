@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import axios from 'axios';
 import { BookOpen, Shield, Target, AlertTriangle, Lightbulb, Activity, Lock, Globe, ShieldCheck, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import clsx from 'clsx';
 import AiTutorWidget from './AiTutorWidget';
@@ -12,10 +13,12 @@ const TABS = [
     { id: 'ai', label: 'AI Tutor', icon: MessageSquare },
 ];
 
-export default function LabBriefing({ title, scenario, vulnerability, objective, owasp, cvss, hints = [] }) {
+export default function LabBriefing({ title, scenario, vulnerability, objective, owasp, cvss }) {
     const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('brief');
-    const [revealedHints, setRevealedHints] = useState([]);
+    
+    // Remote Hint States
+    const [hintCount, setHintCount] = useState(0);
 
     const location = useLocation();
     const match = location.pathname.match(/\/simulation\/lab-(\d+)/);
@@ -23,10 +26,32 @@ export default function LabBriefing({ title, scenario, vulnerability, objective,
 
     const { progress } = useProgress();
     const { user } = useAuth();
+
+    const [fetchedHints, setFetchedHints] = useState(() => {
+        if (!labId || !user?.id) return {};
+        const cached = sessionStorage.getItem(`lab_hints_${user.id}_${labId}`);
+        return cached ? JSON.parse(cached) : {};
+    });
+
+    const revealedCount = Object.keys(fetchedHints).length;
+
+    useEffect(() => {
+        if (labId && user?.id && revealedCount > 0) {
+            sessionStorage.setItem(`lab_hints_${user.id}_${labId}`, JSON.stringify(fetchedHints));
+        }
+    }, [fetchedHints, labId, user?.id, revealedCount]);
     const isCompleted = labId && progress[labId];
     const historicalTime = isCompleted ? progress[labId].timeTaken : null;
 
     const [activeSeconds, setActiveSeconds] = useState(0);
+
+    // Initial Hint Count Fetch
+    useEffect(() => {
+        if (!labId) return;
+        axios.get(`/api/hints/${labId}/count`)
+             .then(res => setHintCount(res.data.count))
+             .catch(err => console.error("Failed to load hint count", err));
+    }, [labId]);
 
     // Live Tracking Stopwatch
     useEffect(() => {
@@ -65,15 +90,22 @@ export default function LabBriefing({ title, scenario, vulnerability, objective,
             const elapsed = startTime ? Math.floor((Date.now() - parseInt(startTime)) / 1000) : 0;
             return {
                 timeTaken: elapsed,
-                hintsUsed: revealedHints.length
+                hintsUsed: revealedCount
             };
         };
         return () => { delete window.__getLabTelemetry; };
-    }, [labId, revealedHints, user?.id]);
+    }, [labId, revealedCount, user?.id]);
 
-    const revealHint = (index) => {
-        if (!revealedHints.includes(index)) {
-            setRevealedHints([...revealedHints, index]);
+    const fetchHint = async (index) => {
+        if (!labId) return;
+        try {
+            const res = await axios.get(`/api/hints/${labId}/${index}`);
+            if (res.data.success) {
+                setFetchedHints(prev => ({...prev, [index]: res.data.hint}));
+            }
+        } catch (err) {
+            console.error("Failed to fetch hint", err);
+            alert("Could not fetch the hint. Please check connection.");
         }
     };
 
@@ -128,10 +160,9 @@ export default function LabBriefing({ title, scenario, vulnerability, objective,
             </button>
 
             {/* === EXPANDED PANEL === */}
-            {isOpen && (
-                <div className="border-t border-slate-100 animate-in slide-in-from-top-1 fade-in duration-150">
+            <div className={clsx("border-t border-slate-100 animate-in slide-in-from-top-1 fade-in duration-150", !isOpen && "hidden")}>
 
-                    {/* Completed Banner */}
+                {/* Completed Banner */}
                     {isCompleted && (
                         <div className="bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-4 flex items-center justify-between gap-4">
                             <div className="flex items-center gap-3 text-white">
@@ -155,7 +186,7 @@ export default function LabBriefing({ title, scenario, vulnerability, objective,
                         {TABS.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
-                            const showBadge = tab.id === 'hints' && hints.length > 0;
+                            const showBadge = tab.id === 'hints' && hintCount > 0;
                             return (
                                 <button
                                     key={tab.id}
@@ -172,11 +203,11 @@ export default function LabBriefing({ title, scenario, vulnerability, objective,
                                     {showBadge && (
                                         <span className={clsx(
                                             "px-1.5 py-0.5 rounded-full text-[9px] font-black",
-                                            revealedHints.length > 0
+                                            revealedCount > 0
                                                 ? "bg-amber-100 text-amber-700"
                                                 : "bg-slate-200 text-slate-500"
                                         )}>
-                                            {revealedHints.length}/{hints.length}
+                                            {revealedCount}/{hintCount}
                                         </span>
                                     )}
                                 </button>
@@ -255,58 +286,62 @@ export default function LabBriefing({ title, scenario, vulnerability, objective,
                         {/* ---- HINTS TAB ---- */}
                         {activeTab === 'hints' && (
                             <div>
-                                {hints.length === 0 ? (
+                                {hintCount === 0 ? (
                                     <div className="text-center py-8 text-slate-400 text-sm">No hints available for this lab.</div>
                                 ) : (
                                     <div className="space-y-3">
                                         <p className="text-xs text-slate-400 font-medium mb-4">
-                                            Each hint deducts from your final score. Reveal only when stuck.
+                                            Each hint deducts from your final score. Reveal only when stuck. Must be opened in sequence.
                                         </p>
-                                        {hints.map((hint, index) => (
-                                            <div key={index} className="flex items-start gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                                                <div className="shrink-0">
-                                                    <button
-                                                        onClick={() => revealHint(index)}
-                                                        disabled={revealedHints.includes(index)}
-                                                        className={clsx(
-                                                            "px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all whitespace-nowrap",
-                                                            revealedHints.includes(index)
-                                                                ? "bg-amber-100 text-amber-600 cursor-default"
-                                                                : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200"
-                                                        )}
-                                                    >
-                                                        {revealedHints.includes(index) ? `✓ Hint ${index + 1}` : `Reveal ${index + 1}`}
-                                                    </button>
+                                        {Array.from({ length: hintCount }).map((_, index) => {
+                                            const isRevealed = fetchedHints[index] !== undefined;
+                                            const isUnlocked = index === 0 || fetchedHints[index - 1] !== undefined;
+                                            
+                                            return (
+                                                <div key={index} className="flex items-start gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl transition-all">
+                                                    <div className="shrink-0">
+                                                        <button
+                                                            onClick={() => fetchHint(index)}
+                                                            disabled={isRevealed || !isUnlocked}
+                                                            className={clsx(
+                                                                "px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all whitespace-nowrap",
+                                                                isRevealed
+                                                                    ? "bg-emerald-100 text-emerald-700 cursor-default border border-emerald-200"
+                                                                    : isUnlocked
+                                                                        ? "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 cursor-pointer shadow-sm"
+                                                                        : "bg-slate-200 text-slate-400 cursor-not-allowed opacity-60"
+                                                            )}
+                                                        >
+                                                            {isRevealed ? `✓ Hint ${index + 1}` : !isUnlocked ? `🔒 Locked` : `Reveal ${index + 1}`}
+                                                        </button>
+                                                    </div>
+                                                    <div className={clsx(
+                                                        "text-sm flex-1 leading-relaxed transition-all duration-300",
+                                                        isRevealed
+                                                            ? "text-slate-700"
+                                                            : "text-transparent bg-slate-200 rounded select-none blur-sm"
+                                                    )}>
+                                                        {isRevealed ? fetchedHints[index] : "This hint is currently encrypted. Request decryption to view the contents."}
+                                                    </div>
                                                 </div>
-                                                <div className={clsx(
-                                                    "text-sm flex-1 leading-relaxed transition-all duration-300",
-                                                    revealedHints.includes(index)
-                                                        ? "text-slate-700"
-                                                        : "text-transparent bg-slate-200 rounded select-none blur-sm"
-                                                )}>
-                                                    {hint}
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
                         )}
 
                         {/* ---- AI TUTOR TAB ---- */}
-                        {activeTab === 'ai' && (
-                            <div>
-                                <AiTutorWidget
-                                    title={title}
-                                    scenario={scenario}
-                                    vulnerability={vulnerability}
-                                    objective={objective}
-                                />
-                            </div>
-                        )}
+                        <div className={activeTab === 'ai' ? 'block' : 'hidden'}>
+                            <AiTutorWidget
+                                title={title}
+                                scenario={scenario}
+                                vulnerability={vulnerability}
+                                objective={objective}
+                            />
+                        </div>
                     </div>
                 </div>
-            )}
         </div>
     );
 }

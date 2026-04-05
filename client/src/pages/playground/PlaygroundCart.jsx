@@ -5,7 +5,7 @@ import { usePlayground } from '../../context/PlaygroundContext';
 import axios from 'axios';
 
 export default function PlaygroundCart() {
-    const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, pgUser } = usePlayground();
+    const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, pgUser, pgUpdateUser } = usePlayground();
     const [checkoutResult, setCheckoutResult] = useState(null);
     const [processing, setProcessing] = useState(false);
 
@@ -19,7 +19,14 @@ export default function PlaygroundCart() {
                 total_amount: cartTotal
             });
             setCheckoutResult(res.data);
-            if (res.data.success) clearCart();
+            if (res.data.success) {
+                clearCart();
+                // Refresh user balance from DB so navbar reflects new balance
+                try {
+                    const profileRes = await axios.get(`/api/labs/playground/profile/${pgUser?.id || 1}`);
+                    if (profileRes.data) pgUpdateUser({ balance: profileRes.data.balance });
+                } catch (_) { /* non-critical */ }
+            }
         } catch (err) {
             console.error(err);
         }
@@ -138,15 +145,6 @@ export default function PlaygroundCart() {
                                 Login to Checkout
                             </Link>
                         )}
-
-                        <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-md">
-                            <div className="flex items-start gap-1.5">
-                                <AlertTriangle className="w-3.5 h-3.5 text-orange-400 mt-0.5 shrink-0" />
-                                <p className="text-[11px] text-orange-600">
-                                    Hint: The total is calculated client-side and sent to the server. What if you intercepted this request?
-                                </p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             )}

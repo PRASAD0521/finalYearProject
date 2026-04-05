@@ -77,18 +77,12 @@ export default function Lab8_Race() {
                 scenario="You are testing a 'Citizen Relief Portal' which offers a strict ONE-TIME digital subsidy payout of ₹5,000 to users facing financial hardship."
                 vulnerability={
                     <span>
-                        The backend database check and the payout update don't happen atomically. If you issue hundreds of concurrent HTTP POST requests to the backend API (`/api/labs/lab8-race/claim`), numerous requests will pass the <code>if(hasClaimed === false)</code> check simultaneously before any of them write `hasClaimed = true` to the database!
+                        The backend database check and the payout update don't happen atomically (as a single unbroken operation). If a massive volume of concurrent requests hit the server at the exact same millisecond, they might all pass the 'eligibility check' before the database has time to register that the payout has already occurred.
                     </span>
                 }
-                objective="Use your Browser Developer Console (F12 -> Console) to write a script that sends parallel fetch requests to drain the system. Accumulate ₹30,000 to buy the Classified System Manual."
+                objective="Exploit the 'Time-of-Check to Time-of-Use' vulnerability to drain the system. Accumulate exactly ₹30,000 to purchase the restricted asset."
                 owasp={{ id: "A04:2021", name: "Insecure Design" }}
                 cvss={{ score: 8.1, severity: "High", vector: "Network", privileges: "Low", impact: "High" }}
-                hints={[
-                    "A human clicking the 'CLAIM' button fast is not fast enough. You need the speed of a machine.",
-                    "Open the Developer Tools (F12) and navigate to the 'Console' tab.",
-                    "Write a JavaScript loop that executes `fetch('/api/labs/lab8-race/claim', { method: 'POST' })` 30-50 times instantly.",
-                    "Example exploit script: `for(let i=0; i<50; i++) fetch('/api/labs/lab8-race/claim', { method: 'POST' });` Paste it, hit Enter, and then click 'Reset Lab' if you need to try again!"
-                ]}
             />
 
             <div className="bg-indigo-900 border border-indigo-700 rounded-lg shadow-xl overflow-hidden text-white flex justify-between items-center p-6">

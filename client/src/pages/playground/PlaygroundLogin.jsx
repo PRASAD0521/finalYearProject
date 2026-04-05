@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Lock, User, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Lock, User, ArrowRight } from 'lucide-react';
 import { usePlayground } from '../../context/PlaygroundContext';
 import axios from 'axios';
 
@@ -39,13 +39,13 @@ export default function PlaygroundLogin() {
             if (isRegister) {
                 const res = await axios.post('/api/labs/playground/register', { username, password });
                 if (res.data.success) {
-                    pgLogin(res.data.user);
+                    pgLogin(res.data.user, null);
                     navigate('/playground');
                 }
             } else {
                 const res = await axios.post('/api/labs/playground/login', { username, password });
                 if (res.data.success) {
-                    pgLogin(res.data.user);
+                    pgLogin(res.data.user, res.data.token);
                     navigate('/playground');
                 }
             }
@@ -69,13 +69,14 @@ export default function PlaygroundLogin() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
                         <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            {/* <User className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" /> */}
                             <input
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 className="input-field pl-9"
                                 placeholder="Enter username"
+                                autoComplete="username"
                                 required
                             />
                         </div>
@@ -84,13 +85,14 @@ export default function PlaygroundLogin() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            {/* <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" /> */}
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="input-field pl-9"
                                 placeholder="Enter password"
+                                autoComplete="current-password"
                                 required
                             />
                         </div>
@@ -115,17 +117,6 @@ export default function PlaygroundLogin() {
                         {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Register"}
                     </button>
                 </div>
-
-                {!isRegister && (
-                    <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-md">
-                        <div className="flex items-start gap-1.5">
-                            <AlertTriangle className="w-3.5 h-3.5 text-orange-400 mt-0.5 shrink-0" />
-                            <p className="text-[11px] text-orange-600">
-                                Hint: This login form may have a classic SQL injection vulnerability. Try <code className="bg-orange-100 px-1 rounded">admin' OR '1'='1</code>
-                            </p>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );

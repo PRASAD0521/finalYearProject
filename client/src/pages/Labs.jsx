@@ -1,5 +1,6 @@
 import { Server, Database, Lock, Globe, Key, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useProgress } from '../context/ProgressContext';
 
 const labs = [
     {
@@ -9,7 +10,7 @@ const labs = [
         difficulty: 'Easy',
         category: 'Injection',
         icon: Database,
-        path: '/simulation/lab-01' // We will implement these routes later or same app?
+        path: '/simulation/lab-01'
     },
     {
         id: 'lab-02',
@@ -95,6 +96,8 @@ const labs = [
 ];
 
 export default function Labs() {
+    const { progress } = useProgress();
+
     return (
         <div>
             <div className="mb-6">
@@ -103,26 +106,48 @@ export default function Labs() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-                {labs.map((lab) => (
-                    <div key={lab.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="p-2 bg-blue-50 rounded-lg">
-                                <lab.icon className="h-6 w-6 text-blue-600" />
+                {labs.map((lab) => {
+                    const labIdNum = parseInt(lab.id.split('-')[1]);
+                    const p = progress[labIdNum];
+                    const isCompleted = p && p.completed !== false && p.timeTaken !== undefined;
+
+                    return (
+                        <div key={lab.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all relative overflow-hidden flex flex-col group">
+
+                            {/* Sleek Status Bar */}
+                            {/* <div className={`absolute top-0 left-0 w-full h-0.5 transition-colors ${isCompleted ? 'bg-green-500 drop-shadow-[0_0_2px_rgba(34,197,94,0.8)]' : 'bg-red-500'}`}></div> */}
+
+                            <div className="flex items-start justify-between mb-4 mt-1">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                                        <lab.icon className="h-6 w-6 text-blue-600" />
+                                    </div>
+                                    {isCompleted && (
+                                        <span className="text-[10px] uppercase font-black tracking-widest text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-200">
+                                            Completed
+                                        </span>
+                                    )}
+                                </div>
+                                <span className={`px-2 py-1 text-xs font-semibold rounded shadow-sm border ${lab.difficulty === 'Easy' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                    lab.difficulty === 'Medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                        lab.difficulty === 'Hard' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                                            'bg-purple-50 text-purple-700 border-purple-200'
+                                    }`}>
+                                    {lab.difficulty}
+                                </span>
                             </div>
-                            <span className={`px-2 py-1 text-xs font-semibold rounded ${lab.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
-                                lab.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-                                }`}>
-                                {lab.difficulty}
-                            </span>
+                            <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-blue-700 transition-colors">{lab.title}</h3>
+                            <p className="text-sm text-slate-500 mb-6 leading-relaxed flex-1">{lab.description}</p>
+
+                            <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
+                                <span className="text-xs text-slate-400 font-mono font-medium uppercase tracking-wider">{lab.category}</span>
+                                <Link to={lab.path} className={`text-sm font-bold flex items-center gap-1 transition-colors ${isCompleted ? 'text-green-600 hover:text-green-800' : 'text-blue-600 hover:text-blue-800'}`}>
+                                    {isCompleted ? 'Review Module' : 'Start Module'} &rarr;
+                                </Link>
+                            </div>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{lab.title}</h3>
-                        <p className="text-sm text-gray-600 mb-4">{lab.description}</p>
-                        <div className="flex items-center justify-between mt-auto">
-                            <span className="text-xs text-gray-400 font-mono">{lab.category}</span>
-                            <Link to={lab.path} className="text-blue-600 hover:text-blue-800 text-sm font-medium">Start Module &rarr;</Link>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

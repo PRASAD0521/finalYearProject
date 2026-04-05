@@ -2,9 +2,9 @@ import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useProgress } from '../context/ProgressContext';
 import { Shield, Target, Clock, BrainCircuit, Activity, ChevronRight } from 'lucide-react';
-import { 
-    Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, 
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell 
+import {
+    Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell
 } from 'recharts';
 
 const allLabs = [
@@ -25,13 +25,13 @@ export default function Dashboard() {
     const { total, completed } = getStats();
 
     // 1. Data Transformation Engine
-    const { 
-        totalScore, 
-        avgTime, 
-        totalTokens, 
-        radarData, 
-        barData, 
-        matrixData 
+    const {
+        totalScore,
+        avgTime,
+        totalTokens,
+        radarData,
+        barData,
+        matrixData
     } = useMemo(() => {
         let tScore = 0;
         let tTime = 0;
@@ -177,7 +177,7 @@ export default function Dashboard() {
 
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
+
                 {/* Radar Chart */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 col-span-1 flex flex-col">
                     <h3 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-6">
@@ -210,22 +210,22 @@ export default function Dashboard() {
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={barData} layout="vertical" margin={{ top: 10, right: 30, left: 30, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                                    <XAxis 
-                                        type="number" 
-                                        domain={[0, 1000]} 
-                                        tick={{ fill: '#94a3b8', fontSize: 11 }} 
-                                        tickLine={false} 
-                                        axisLine={false} 
+                                    <XAxis
+                                        type="number"
+                                        domain={[0, 1000]}
+                                        tick={{ fill: '#94a3b8', fontSize: 11 }}
+                                        tickLine={false}
+                                        axisLine={false}
                                     />
-                                    <YAxis 
-                                        dataKey="name" 
-                                        type="category" 
-                                        tick={{ fill: '#475569', fontSize: 11, fontWeight: 600 }} 
-                                        tickLine={false} 
-                                        axisLine={false} 
+                                    <YAxis
+                                        dataKey="name"
+                                        type="category"
+                                        tick={{ fill: '#475569', fontSize: 11, fontWeight: 600 }}
+                                        tickLine={false}
+                                        axisLine={false}
                                         width={110}
                                     />
-                                    <Tooltip 
+                                    <Tooltip
                                         cursor={{ fill: '#f8fafc' }}
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                     />

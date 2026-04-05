@@ -11,6 +11,7 @@ export default function PlaygroundHome() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState('All');
+    const [challengeCount, setChallengeCount] = useState(0);
 
     const searchQuery = searchParams.get('search') || '';
     const categoryParam = searchParams.get('category') || '';
@@ -22,6 +23,12 @@ export default function PlaygroundHome() {
     useEffect(() => {
         fetchProducts();
     }, [activeCategory, searchQuery]);
+
+    useEffect(() => {
+        axios.get('/api/labs/playground/challenges')
+            .then(res => setChallengeCount(res.data.length))
+            .catch(() => setChallengeCount(13));
+    }, []);
 
     const fetchProducts = async () => {
         setLoading(true);
@@ -44,20 +51,17 @@ export default function PlaygroundHome() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div>
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-1">
                             <h1 className="text-2xl font-bold text-gray-900">CyberStore</h1>
-                            <span className="px-2 py-0.5 bg-orange-50 border border-orange-200 rounded-full text-orange-600 text-xs font-semibold flex items-center gap-1">
-                                <ShieldAlert className="w-3 h-3" /> Vulnerable by Design
-                            </span>
                         </div>
                         <p className="text-sm text-gray-500">
-                            A fully functional e-commerce store with intentional security vulnerabilities. Find the bugs, exploit the flaws, capture the flags.
+                            Your trusted online store. Shop electronics, gadgets, accessories, and more.
                         </p>
                     </div>
                     <div className="flex gap-3">
                         <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-md border border-gray-200 text-sm">
                             <Zap className="w-4 h-4 text-indigo-500" />
-                            <span className="text-gray-600"><span className="text-gray-900 font-bold">5</span> Challenges</span>
+                            <span className="text-gray-600"><span className="text-gray-900 font-bold">{challengeCount || '...'}</span> Challenges</span>
                         </div>
                     </div>
                 </div>

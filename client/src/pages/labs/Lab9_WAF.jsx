@@ -68,18 +68,12 @@ export default function Lab9_WAF() {
                 scenario="You are accessing an Administrative 'Emergency Override' terminal that requires a 3-digit PIN (000 - 999). To prevent automated brute-forcing, a Web Application Firewall strictly enforces an IP ban after 3 failed attempts."
                 vulnerability={
                     <span>
-                        The backend application extracts your IP address by trusting the <code>X-Forwarded-For</code> HTTP header (a common misconfiguration when servers sit behind internal Load Balancers or Proxies). This string can be externally controlled by the attacker!
+                        To track and block malicious IPs, the backend application trusts an HTTP header injected by proxy servers (such as <code>X-Forwarded-For</code>). Because this header is provided by the client, it can be entirely spoofed, tricking the WAF into thinking every request is coming from a completely different computer.
                     </span>
                 }
-                objective="Write a JavaScript loop in your Developer Console to systematically guess all PINs from 000 to 999 while injecting a forged 'X-Forwarded-For' header with a random IP on every request to bypass the 3-attempt lock."
+                objective="Automate an attack utilizing Header Spoofing to successfully guess the 3-digit PIN without triggering the permanent lockout."
                 owasp={{ id: "A05:2021", name: "Security Misconfiguration" }}
                 cvss={{ score: 7.5, severity: "High", vector: "Network", privileges: "Low", impact: "High" }}
-                hints={[
-                    "A human cannot guess a 3-digit PIN in 3 tries. You need to write a script that guesses all 1,000 possibilities.",
-                    "The WAF blocks your IP after 3 tries. But how does it know your IP? It looks at the `X-Forwarded-For` HTTP header.",
-                    "If you spoof that header with a random IP on every single fetch request, the WAF will think every guess is coming from a brand new computer!",
-                    "Example exploit: `for(let i=0; i<1000; i++){ let pin=i.toString().padStart(3,'0'); fetch('/api/labs/lab9-waf/verify', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-Forwarded-For': Math.random().toString()}, body: JSON.stringify({pin}) }) }`"
-                ]}
             />
 
             <div className="bg-slate-900 border text-white border-slate-800 rounded-lg shadow-xl overflow-hidden flex flex-col md:flex-row">

@@ -28,6 +28,11 @@ app.use(cookieParser());
 // 1. Initialize Databases (Platform, Labs, Playground)
 initDatabases();
 
+// 1.5 Health Check Endpoint (For Frontend Status Indicator)
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // 2. Platform Authentication (Secure - Uses platformDB)
 app.post('/api/register', (req, res) => {
     const { username, password } = req.body;
@@ -87,7 +92,7 @@ const chatRoutes = require('./routes/chat');
 app.use('/api/chat', chatRoutes);
 
 // 5. Secure Time-Gated Hints
-const hintsRoutes = require('./routes/hints');
+const hintsRoutes = require('./routes/hints').router;
 app.use('/api/hints', hintsRoutes);
 
 // 6. Secure Admin Utilities

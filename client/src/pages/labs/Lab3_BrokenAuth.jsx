@@ -112,18 +112,26 @@ export default function Lab3_BrokenAuth() {
     return (
         <div className="max-w-4xl mx-auto space-y-8">
             <LabBriefing
-                title="Broken Authentication: Response Manipulation"
-                scenario="The application uses a 2-Step Verification (OTP) system. However, the frontend creates a 'trust' decision based on the JSON response from the server."
-                vulnerability={<span>The application trusts the <code>success: false</code> response from the server. If an attacker intercepts this response and changes it to <code>success: true</code>, the frontend believes authentication was successful.</span>}
-                objective="Bypass the OTP check for the 'admin' user by intercepting and modifying the server response."
+                title="Broken Authentication: Client-Side Trust"
+                scenario={
+                    <span>
+                        You are analyzing a high-security portal that requires 2-Step Verification (OTP). 
+                        When you submit an OTP, the server checks it and sends a response back to the browser. 
+                        The browser then reads this response to decide whether to log you in.
+                    </span>
+                }
+                vulnerability={
+                    <span>
+                        This architecture has a fatal flaw: <strong>Client-Side Trust</strong>. 
+                        The backend verifies the OTP correctly, but it relies on the frontend to enforce the 
+                        result. An attacker sitting between the server and the browser can intercept the 
+                        server's rejection response, modify it to look like an approval, and forward the 
+                        tampered response to the browser. The browser will unknowingly trust the fake approval.
+                    </span>
+                }
+                objective="Bypass the OTP check for the 'admin' user by intercepting the network traffic and maliciously altering the server's response before it reaches the frontend."
                 owasp={{ id: "A07:2021", name: "Identification and Authentication Failures" }}
                 cvss={{ score: 9.1, severity: "Critical", vector: "Network", privileges: "None", impact: "High" }}
-                hints={[
-                    "When you submit a wrong OTP, the server replies with a JSON object saying { success: false }.",
-                    "The frontend React application blindly trusts whatever that JSON object says.",
-                    "Turn the Interceptor ON. Submit a fake OTP. The request will pause.",
-                    "Look at the JSON response in the inspector. Change the word 'false' to 'true' and click Forward!"
-                ]}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -255,16 +263,6 @@ export default function Lab3_BrokenAuth() {
                         )}
                     </div>
 
-                    <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg text-sm text-blue-800">
-                        <strong>How to hack this:</strong>
-                        <ol className="list-decimal ml-5 mt-2 space-y-1">
-                            <li>Switch <strong>INTERCEPT ON</strong>.</li>
-                            <li>Try to verify with a wrong OTP (e.g., "000000").</li>
-                            <li>The request will be paused. Look at the response JSON.</li>
-                            <li>Change <code>"success": false</code> to <code>"success": true</code>.</li>
-                            <li>Click <strong>Forward Response</strong>.</li>
-                        </ol>
-                    </div>
                 </div>
             </div>
         </div>

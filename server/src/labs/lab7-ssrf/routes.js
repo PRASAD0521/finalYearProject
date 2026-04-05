@@ -1,71 +1,128 @@
 const express = require('express');
 const router = express.Router();
 
-// Vulnerable SSRF endpoint
-router.post('/verify-document', async (req, res) => {
-    const { url } = req.body;
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-    if (!url) {
-        return res.status(400).json({ error: "URL is required" });
-    }
+function slugToName(slug) {
+    return slug
+        .replace(/[_-]+/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase())
+        .trim();
+}
 
+function isInternalUrl(url) {
     try {
-        // Wait up to 3000ms
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const { hostname } = new URL(url);
+        return (
+            hostname === 'localhost' ||
+            hostname === '127.0.0.1' ||
+            hostname === '::1' ||
+            hostname.startsWith('192.168.') ||
+            hostname.startsWith('10.') ||
+            hostname.startsWith('172.16.') ||
+            hostname.startsWith('172.17.') ||
+            hostname.startsWith('172.18.') ||
+            hostname.startsWith('172.19.') ||
+            hostname.startsWith('172.2') ||
+            hostname.startsWith('172.3') ||
+            hostname === '0.0.0.0' ||
+            hostname === '169.254.169.254'
+        );
+    } catch { return false; }
+}
 
-        // Native fetch available in Node.js 18+
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: { 'User-Agent': 'UIDAI-eKYC-Verifier/2.0' },
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+function isLinkedInProfile(url) {
+    try {
+        const { hostname, pathname } = new URL(url);
+        return (
+            (hostname === 'www.linkedin.com' || hostname === 'linkedin.com') &&
+            pathname.startsWith('/in/')
+        );
+    } catch { return false; }
+}
 
-        // We return the raw text to the user
-        const bodyText = await response.text();
+// ─── POST /import-profile ────────────────────────────────────────────────────
+router.post('/import-profile', async (req, res) => {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: 'URL is required' });
 
-        let contentType = response.headers.get('content-type') || 'text/plain';
-        res.json({
+    // ── Case 1: LinkedIn profile URL → simulated profile response
+    if (isLinkedInProfile(url)) {
+        const match = url.match(/linkedin\.com\/in\/([^\/\?#]+)/);
+        const slug = match ? match[1] : 'user';
+        const name = slugToName(slug);
+        const emailSlug = slug.replace(/[^a-z0-9]/gi, '.').toLowerCase();
+
+        const simulatedProfile = {
+            name,
+            email: `${emailSlug}@gmail.com`,
+            phone: '+91 98765 43210',
+            location: 'Hyderabad, Telangana, India',
+            current_role: 'Software Engineer',
+            current_company: 'TechSolutions Pvt Ltd',
+            years_experience: '3',
+            skills: 'JavaScript, React, Node.js, Python, SQL, Docker',
+            education_degree: 'B.Tech Computer Science',
+            education_institution: 'VIIT University',
+            education_year: '2022',
+            headline: 'Software Engineer | Full Stack Developer | Open to Opportunities',
+        };
+
+        return res.json({
             success: true,
-            status: response.status,
-            contentType: contentType,
-            data: bodyText
-        });
-
-    } catch (err) {
-        // We leak connection errors simulating a verbose fetch block
-        res.status(500).json({
-            success: false,
-            error: "Failed to fetch resource",
-            details: err.message
+            status: 200,
+            contentType: 'application/json',
+            simulated: true,
+            data: JSON.stringify(simulatedProfile)
         });
     }
+
+    // ── Case 2: Internal / private IP → fetch directly (SSRF vector)
+    if (isInternalUrl(url)) {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: { 'User-Agent': 'HirePort-ProfileImporter/1.0' },
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            const bodyText = await response.text();
+            const contentType = response.headers.get('content-type') || 'text/plain';
+
+            return res.json({
+                success: true,
+                status: response.status,
+                contentType,
+                simulated: false,
+                data: bodyText
+            });
+        } catch (err) {
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to fetch URL',
+                details: err.message
+            });
+        }
+    }
+
+    // ── Case 3: All other external URLs → unsupported
+    return res.status(422).json({
+        success: false,
+        error: 'Unsupported URL. Only LinkedIn profiles and direct API endpoints are supported.'
+    });
 });
 
-// The Mock Admin Database Dump (Only accessible if they provide the token)
-router.post('/admin/db', (req, res) => {
-    const { token } = req.body;
-
-    if (token !== 'UIDAI_admin_master_key_9921') {
-        return res.status(401).json({ error: "Unauthorized. Invalid UIDAI Master Key." });
+// ─── POST /verify-flag ───────────────────────────────────────────────────────
+router.post('/verify-flag', (req, res) => {
+    const { flag } = req.body;
+    if (flag && flag.trim() === 'FLAG{ssrf_internal_config_exposed_07}') {
+        return res.json({ success: true, message: 'Correct! You successfully exploited SSRF.' });
     }
-
-    // Return fake Aadhaar database dump
-    const fakeDb = {
-        citizens: [
-            { aadhaar: "xxxx-xxxx-1092", name: "Anil Kumar", dob: "1985-04-12", phone: "+91-9876543210" },
-            { aadhaar: "xxxx-xxxx-4431", name: "Priya Sharma", dob: "1992-11-05", phone: "+91-8765432109" },
-            { aadhaar: "xxxx-xxxx-9811", name: "Rahul Singh", dob: "1978-08-22", phone: "+91-7654321098" }
-        ],
-        system_secrets: {
-            auth_gateway: "https://auth.uidai.internal.gov.in",
-            encryption_key: "AES256-GCM-K1: a7b2c9d4e1f5...",
-            flag: "FLAG{ssrf_national_database_breach_level_9}"
-        }
-    };
-
-    res.json({ success: true, database: fakeDb });
+    res.status(400).json({ success: false, message: 'Incorrect flag. Keep exploring the internal API.' });
 });
 
 module.exports = router;

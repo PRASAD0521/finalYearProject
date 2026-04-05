@@ -72,6 +72,14 @@ function initLabsDB() {
             price REAL
         )`);
 
+        labsDB.run(`CREATE TABLE IF NOT EXISTS beta_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            email TEXT,
+            role TEXT,
+            secret_key TEXT
+        )`);
+
         labsDB.get("SELECT count(*) as count FROM lab_users", (err, row) => {
             if (row && row.count === 0) {
                 console.log("[Labs DB] Seeding initial data...");
@@ -87,6 +95,18 @@ function initLabsDB() {
                     ('Antivirus 1-Year', 'Standard malware protection', 49.99),
                     ('VPN Subscription', 'Secure tunnel for remote access', 5.00),
                     ('Debug Tool', 'Internal tool for developers', 0.00)
+                `);
+            }
+        });
+
+        // Independent Seeding: Lab 4 Beta Users
+        labsDB.get("SELECT count(*) as count FROM beta_users", (err, row) => {
+            if (row && row.count === 0) {
+                console.log("[Labs DB] Seeding Lab 4 Misconfig Users...");
+                labsDB.run(`INSERT INTO beta_users (name, email, role, secret_key) VALUES 
+                    ('Dev Team', 'devs@cyberrange.internal', 'developer', 'DEV_NULL'),
+                    ('Tester Bob', 'bob@cyberrange.internal', 'tester', 'TEST_MODE_ACTIVE'),
+                    ('Admin Service', 'admin@cyberrange.internal', 'admin', 'FLAG{stack_trace_sqli_master}')
                 `);
             }
         });
@@ -177,6 +197,15 @@ function initPlaygroundDB() {
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )`);
 
+        // Per-user flags (generated at registration, unique per user)
+        playgroundDB.run(`CREATE TABLE IF NOT EXISTS pg_user_flags(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                challenge_id TEXT,
+                flag_code TEXT,
+                UNIQUE(user_id, challenge_id)
+            )`);
+
         // Seed Data
         playgroundDB.get("SELECT count(*) as count FROM pg_products", (err, row) => {
             if (row && row.count === 0) {
@@ -233,21 +262,56 @@ function initPlaygroundDB() {
         (3, 89.99, '[{"name":"Mechanical Keyboard RGB","qty":1,"price":89.99}]', 'Processing', '2025-02-10T09:00:00Z')
             `);
 
-                // 5. Register CTF Flags (expanded)
+            }
+        });
+
+        // Independent Seeding: CTF Flags
+        playgroundDB.run('DROP TABLE IF EXISTS pg_flags', () => {
+            playgroundDB.run(`CREATE TABLE IF NOT EXISTS pg_flags(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                challenge_id TEXT UNIQUE,
+                name TEXT,
+                description TEXT,
+                flag_code TEXT,
+                points INTEGER,
+                category TEXT DEFAULT 'Web'
+            )`, () => {
+                playgroundDB.get("SELECT count(*) as count FROM pg_flags", (err, row) => {
+            if (row && row.count === 0) {
+                console.log("[Playground DB] Seeding CTF Flags...");
                 const flags = [
-                    ['STORED_XSS', 'Stored XSS', 'Execute JavaScript via a Product Review comment', 'FLAG{xss_review_master_33}', 100, 'XSS'],
-                    ['IDOR_ORDER', 'Order Snooping', 'View another user\'s order details by manipulating the order ID', 'FLAG{idor_order_inspector_99}', 150, 'IDOR'],
-                    ['LOGIC_PRICE', 'Free Shopping', 'Purchase items for $0 by manipulating the checkout request', 'FLAG{price_logic_bypass_00}', 200, 'Logic'],
-                    ['SQLI_LOGIN', 'SQL Injection Login', 'Bypass authentication using SQL injection on the CyberStore login', 'FLAG{sqli_auth_bypass_42}', 150, 'SQLi'],
-                    ['ADMIN_ACCESS', 'Admin Panel', 'Access the admin panel without proper authorization', 'FLAG{admin_access_control_bypass}', 100, 'Access Control'],
-                    ['LAB5_IDOR', 'IDOR Document Access', 'Access a secret document belonging to another user by manipulating the document ID', 'FLAG{idor_api_bypass_77}', 150, 'IDOR'],
-                    ['LAB6_CRYPTO', 'Cryptographic Failure', 'Crack a weak MD5 password hash by finding the leaked salt and using a dictionary attack', 'FLAG{cr4ck3d_w34k_h4sh_88}', 200, 'Crypto']
+                    ['STORED_XSS',     'Stored XSS',           'Execute a persistent JavaScript payload via a product review',                                    '', 100, 'XSS'],
+                    ['IDOR_ORDER',     'Order Snooping',       'Access another customer\'s order details by manipulating the order ID in the API',              '', 150, 'IDOR'],
+                    ['LOGIC_PRICE',    'Free Shopping',        'Purchase items without paying full price by manipulating the checkout request',                  '', 200, 'Logic'],
+                    ['SQLI_LOGIN',     'SQL Injection',        'Exploit a SQL injection vulnerability in the product search to extract data',                   '', 150, 'SQLi'],
+                    ['ADMIN_ACCESS',   'Admin Panel Discovery','Access the store\'s admin API without any authorization credentials',                           '', 100, 'Access Control'],
+                    ['BROKEN_AUTH_JWT','VIP Escalation',       'Forge a weak JWT token to elevate your role and access the VIP product catalogue',             '', 200, 'Auth'],
+                    ['MISCONFIG_DEBUG','Hidden Endpoints',     'Discover a leftover debug route that exposes environment variables and credentials',             '', 100, 'Misconfig'],
+                    ['CRYPTO_COUPONS', 'Discount Forgery',     'Reverse-engineer the coupon encoding scheme to forge a 100% discount coupon',                  '', 150, 'Crypto'],
+                    ['SSRF_AVATAR',    'Internal Recon',       'Abuse the avatar fetcher to make the server request your target internal URLs',                '', 250, 'SSRF'],
+                    ['RACE_CASHBACK',  'Double Cashback',      'Race the cashback redemption endpoint to redeem more than your available balance',             '', 300, 'Race Condition'],
+                    ['WAF_RATE',       'Rate Limit Bypass',    'Spoof your IP address to bypass the WAF rate limiter and brute-force the gift card PIN',       '', 250, 'Rate Limit'],
+                    ['LAB5_IDOR',      'IDOR Document Access', 'Access a confidential document belonging to another user by manipulating the document ID',     '', 150, 'IDOR'],
+                    ['LAB6_CRYPTO',    'Cryptographic Failure','Crack a weakly hashed password using a rainbow table or dictionary attack',                    '', 200, 'Crypto']
                 ];
 
                 const fstmt = playgroundDB.prepare("INSERT INTO pg_flags (challenge_id, name, description, flag_code, points, category) VALUES (?, ?, ?, ?, ?, ?)");
                 flags.forEach(f => fstmt.run(f));
                 fstmt.finalize();
+
+                // Seed per-user flags for the 4 pre-seeded accounts (IDs 1–4)
+                setTimeout(() => {
+                    try {
+                        const { seedUserFlags } = require('../labs/playground/routes');
+                        [1, 2, 3, 4].forEach(uid => seedUserFlags(uid));
+                        console.log('[Playground DB] Per-user flags seeded for existing accounts.');
+                    } catch(e) {
+                        console.error('[Playground DB] Could not seed user flags:', e.message);
+                    }
+                }, 500); // wait 500ms for pg_flags insert to complete
             }
+        });
+        });
         });
 
         // Independent Seeding: Lab 5 Documents

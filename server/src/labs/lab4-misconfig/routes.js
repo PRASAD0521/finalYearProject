@@ -1,29 +1,35 @@
 const express = require('express');
 const router = express.Router();
-const { platformDB } = require('../../database/connection');
-const { labsDB } = require('../../database/connection');
+const { labsDB, platformDB } = require('../../database/connection');
 
-// Route: /api/labs/lab4-misconfig/debug
-router.get('/debug', (req, res) => {
-    // VULNERABILITY: Sensitive data exposure
-    const user_id = req.query.user_id;
+// Example Endpoint: POST /api/labs/lab4-misconfig/user
+router.post('/user', (req, res) => {
+    // Expects { "id": "1" }
+    const userId = req.body.id;
 
-    labsDB.all("SELECT * FROM lab_users", (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+    if (userId === undefined) {
+         return res.status(400).json({ error: "Missing 'id' parameter in JSON body." });
+    }
 
-        if (user_id) {
-            platformDB.run(
-                "INSERT OR IGNORE INTO completed_labs (user_id, lab_id) VALUES (?, ?)",
-                [user_id, 4]
-            );
+    // VULNERABILITY 1: Direct SQL concatenation (SQLi)
+    const sql = `SELECT id, name, email, role FROM beta_users WHERE id = '${userId}'`;
+
+    labsDB.all(sql, (err, rows) => {
+        if (err) {
+            // VULNERABILITY 2: Verbose Error Handling in Production!
+            // Passing the raw SQL error back to the client
+            const errorObj = new Error(err.message);
+            errorObj.stack = `Error: ${err.message}\n    at Database.all (/opt/cyberrange/server/src/labs/lab4-misconfig/routes.js:15:12)\n    at Query.execute (/opt/cyberrange/server/node_modules/sqlite3/lib/sqlite3.js:80:11)\n    [Raw Query Executed]: ${sql}\n    [Environment]: PRODUCTION\n    [Database]: sqlite3://internal-labs.db`;
+            
+            // Send back 500 with stack
+            return res.status(500).json({
+                error: true,
+                message: "Internal Server Error",
+                stack: errorObj.stack
+            });
         }
 
-        res.json({
-            systemStatus: 'OK',
-            debugMode: true,
-            environment: 'production',
-            activeUsers: rows // Leak
-        });
+        res.json({ success: true, count: rows.length, data: rows });
     });
 });
 

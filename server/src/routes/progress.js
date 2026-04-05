@@ -116,14 +116,14 @@ const reportData = {
         ]
     },
     4: {
-        title: "Security Misconfiguration",
-        severity: "High",
+        title: "Security Misconfiguration (Chained Exploitation)",
+        severity: "Critical",
         owasp: "OWASP A05:2021 - Security Misconfiguration",
-        whatHappened: "You discovered and accessed an unprotected administrative debug endpoint that was accidentally exposed to the public internet.",
-        explanation: "Developers often leave hidden diagnostic tools or 'backdoors' active for testing purposes but forget to disable them before deploying to production. By actively scanning or guessing common directory names, you located an endpoint that lacked proper authentication checks.",
+        whatHappened: "You exploited a verbose Express.js error handler to perfectly map the backend database schema, which you then used to craft a precision UNION-based SQL Injection attack.",
+        explanation: "By deliberately sending an invalid payload, you caused the backend database parser to crash. Because the developers left 'Debug Mode' enabled in production, the application dumped its raw stack trace directly to your browser. This stack trace contained the exact, vulnerable SQL query being executed. You chained this misconfiguration (A05) into an Injection attack (A03) by using the leaked table and column names to meticulously extract the hidden Admin secret key.",
         technical: [
-            { type: "vulnerable", code: "// Express.js Endpoint Exposure\napp.get('/api/admin/debug', (req, res) => {\n  // No authentication middleware present!\n  res.send(systemDiagnostics);\n});" },
-            { type: "secure", code: "// Secure Remediation: Enforce Role-Based Access Control (RBAC)\nconst verifyAdmin = require('../middleware/auth');\n\n// 1. Ideally, remove this endpoint entirely in production environments.\n// 2. If strictly required, mandate authentication:\napp.get('/api/admin/debug', verifyAdmin, (req, res) => { ... });" }
+            { type: "vulnerable", code: "// 1. Leaking the Stack Trace (Misconfiguration)\napp.use((err, req, res, next) => {\n  // NEVER return err.stack in production!\n  res.status(500).json({ error: err.message, stack: err.stack });\n});\n\n// 2. The Leaked Vulnerability (SQL Injection)\nconst sql = `SELECT id, name, email FROM beta_users WHERE id = '${req.body.id}'`;" },
+            { type: "secure", code: "// Secure Remediation\n// 1. Sanitize Errors: Ensure NODE_ENV=production so Express hides stack traces.\napp.use((err, req, res, next) => {\n  res.status(500).json({ error: 'Internal Server Error' }); \n});\n\n// 2. Fix SQLi with Parameterized Queries\nconst sql = `SELECT id, name, email FROM beta_users WHERE id = ?`;\ndb.all(sql, [req.body.id], ...);" }
         ]
     },
     5: {

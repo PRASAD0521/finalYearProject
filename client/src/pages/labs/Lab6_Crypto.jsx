@@ -167,21 +167,15 @@ export default function Lab6_Crypto() {
         <div className="max-w-5xl mx-auto space-y-6">
             <LabBriefing
                 title="Cryptographic Failures"
-                scenario="You are a junior IT administrator at CyberCorp. Your job is to monitor the company's internal systems using the 'IT Operations Portal'. This portal lets you check service health, run system backups, and perform basic maintenance tasks. You've noticed that the portal has an 'Admin Panel' section, but it's locked behind a login screen. Only the senior system administrator has the credentials to access it. Your user account (jr_admin) does not have permission to view what's inside."
+                scenario="You are a junior IT admin with access to a basic Operations Portal. The portal contains an 'Admin Panel' locked behind a credential screen that you don't have access to."
                 vulnerability={
                     <span>
-                        Cryptographic Failures happen when an application fails to properly protect sensitive data — like passwords, credit card numbers, or personal information. This can occur in many ways: using <strong>weak or outdated hashing algorithms</strong> (like MD5 or SHA1) instead of modern secure ones (like bcrypt or Argon2), <strong>hardcoding secrets</strong> (like encryption keys or salts) directly into the application's source code where anyone can read them, or <strong>exposing database backups</strong> through APIs that don't have proper access controls. In this lab, the developers made multiple cryptographic mistakes that, when chained together, allow a low-privilege user to crack the administrator's password.
+                        Applications often fail to properly protect sensitive data at rest. By combining insecure data exfiltration (like poorly permissioned system backups) with <strong>weak cryptographic implementations</strong> (such as hardcoded salts and outdated hashing algorithms like MD5), an attacker can easily recover plaintext passwords offline.
                     </span>
                 }
-                objective="Your goal is to gain unauthorized access to the Administrator panel. To do this, you will need to: (1) find the leaked password hashes, (2) discover the hashing algorithm and salt being used, (3) write a script to perform a dictionary attack and crack the admin password, and (4) log in with the cracked credentials to capture the flag."
+                objective="Recover the administrator's password by piecing together leaked cryptographic secrets and performing offline password cracking to unlock the Admin Panel."
                 owasp={{ id: "A02:2021", name: "Cryptographic Failures" }}
                 cvss={{ score: 7.4, severity: "High", vector: "Network", privileges: "Low", impact: "High" }}
-                hints={[
-                    "First, click 'Run System Backup'. This will download a JSON file containing the backup database dump.",
-                    "Look inside the JSON file. You will see the admin's password hash. Unfortunately, you can't reverse a hash without knowing the algorithm and the salt.",
-                    "Open Developer Tools (F12) -> Network tab. Refresh the page. Look for a leaked javascript file (like config.js) that exposes the weak algorithm and the hardcoded salt.",
-                    "Once you know the salt ('CyberRange2024!') and algorithm (md5), you can write a simple Python or NodeJS script to hash a dictionary of common passwords until you find the exact match!"
-                ]}
             />
 
             <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">

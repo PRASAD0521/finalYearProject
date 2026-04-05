@@ -8,7 +8,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useProgress } from '../context/ProgressContext';
 import { useAuth } from '../context/AuthContext';
 
-export default function AiTutorWidget({ title, scenario, objective, isPostLab = false }) {
+export default function AiTutorWidget({ title, scenario, objective, hints = [], isPostLab = false }) {
     const location = useLocation();
     const { user } = useAuth();
     
@@ -28,16 +28,35 @@ export default function AiTutorWidget({ title, scenario, objective, isPostLab = 
     const isCompleted = labId && progress[labId];
 
     useEffect(() => {
-        // Reset state if they navigate to a new lab
-        if (labId) {
-            setMessages([{
-                role: 'assistant',
-                content: `CyberRange Advanced Support initialized for Lab ${labId}. Need a gentle nudge on finding the vulnerability? You have 5 queries remaining.`
-            }]);
-            setScoreAccumulator(0);
-            setTokenAccumulator(0);
+        // Hydrate state from sessionStorage if returning to the lab
+        if (labId && user?.id) {
+            const cachedMessages = sessionStorage.getItem(`ai_msgs_${user.id}_${labId}`);
+            const cachedScore = sessionStorage.getItem(`ai_score_${user.id}_${labId}`);
+            const cachedTokens = sessionStorage.getItem(`ai_tokens_${user.id}_${labId}`);
+
+            if (cachedMessages) {
+                setMessages(JSON.parse(cachedMessages));
+                setScoreAccumulator(parseInt(cachedScore) || 0);
+                setTokenAccumulator(parseInt(cachedTokens) || 0);
+            } else {
+                setMessages([{
+                    role: 'assistant',
+                    content: `CyberRange Advanced Support initialized for Lab ${labId}. Need a gentle nudge on finding the vulnerability? You have 5 queries remaining.`
+                }]);
+                setScoreAccumulator(0);
+                setTokenAccumulator(0);
+            }
         }
-    }, [labId]);
+    }, [labId, user?.id]);
+
+    // Sync to sessionStorage on state updates
+    useEffect(() => {
+        if (labId && user?.id && messages.length > 0) {
+            sessionStorage.setItem(`ai_msgs_${user.id}_${labId}`, JSON.stringify(messages));
+            sessionStorage.setItem(`ai_score_${user.id}_${labId}`, scoreAccumulator.toString());
+            sessionStorage.setItem(`ai_tokens_${user.id}_${labId}`, tokenAccumulator.toString());
+        }
+    }, [messages, scoreAccumulator, tokenAccumulator, labId, user?.id]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -83,6 +102,7 @@ export default function AiTutorWidget({ title, scenario, objective, isPostLab = 
                 labTitle: title,
                 scenario: scenario,
                 objective: objective,
+                hints: hints,
                 userId: user?.id
             });
 

@@ -39,21 +39,24 @@ export default function Lab2_XSS() {
         <div className="max-w-4xl mx-auto">
             <LabBriefing
                 title="Reflected XSS"
-                scenario="The product search feature reflects your input back to you saying 'Results for: [your text]'. The developers trusted your input too much."
-                vulnerability={
+                scenario={
                     <span>
-                        The application takes your search query and renders it directly into the HTML without escaping special characters. This allows you to inject malicious JavaScript tags like <code>&lt;img src=x onerror=alert(1)&gt;</code>.
+                        You are testing an e-commerce platform's product search feature. 
+                        The application is designed to be user-friendly by displaying a "Results for: [your text]" 
+                        message when you search.
                     </span>
                 }
-                objective="Inject a JavaScript payload that triggers a browser alert popup (alert(1))."
+                vulnerability={
+                    <span>
+                        The application takes your search query and renders it directly back into the HTML of the page 
+                        without sanitizing or escaping special characters. Because the browser cannot distinguish between 
+                        the text you typed and the actual code of the website, it will execute any malicious 
+                        HTML or JavaScript tags included in your input.
+                    </span>
+                }
+                objective="Inject a JavaScript payload into the search bar that forces the browser to execute an alert popup (e.g. alert(1))."
                 owasp={{ id: "A03:2021", name: "Injection" }}
                 cvss={{ score: 8.8, severity: "High", vector: "Network", privileges: "None", impact: "High" }}
-                hints={[
-                    "When you type a standard word and press search, where exactly does that word appear on the screen?",
-                    "If the application just pastes your text directly into the DOM, what happens if your text IS HTML?",
-                    "Try wrapping your search term in basic HTML tags, like <h1>test</h1>. Does the text get bigger? If so, you have HTML Injection.",
-                    "If HTML works, JavaScript (XSS) will work. Try an active payload like: <script>alert(1)</script> or <img src=x onerror=alert(1)>"
-                ]}
             />
             <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
                 <div className="bg-slate-800 p-6 flex justify-between items-center text-white">
@@ -67,11 +70,6 @@ export default function Lab2_XSS() {
                 </div>
 
                 <div className="p-8">
-                    <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-500 p-4 text-sm text-yellow-700">
-                        <p><strong>Warning:</strong> The search term is echoed back to the page without sanitization. <br />
-                            Try injecting HTML/JS: <code className="bg-yellow-100 px-1 rounded">&lt;img src=x onerror=alert(1)&gt;</code>
-                        </p>
-                    </div>
 
                     <form onSubmit={handleSearch} className="flex gap-4 mb-8">
                         <div className="relative flex-1">

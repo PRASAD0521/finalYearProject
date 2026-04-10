@@ -55,3 +55,6 @@ finalYearProject/
 ├── database/      # Database schemas and configurations
 ├── LICENSE
 └── README.md
+
+
+<img width="1892" height="951" alt="image" src="https://github.com/user-attachments/assets/b2b8fcbc-e004-449c-944d-dd4cea57fb82" />
